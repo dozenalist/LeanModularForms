@@ -328,17 +328,25 @@ private lemma gl_eq_of_intMat_eq (g h : GL (Fin 2) ℚ)
     (P Q : SpecialLinearGroup (Fin 2) ℤ)
     (hPQ : (P : Matrix (Fin 2) (Fin 2) ℤ) * A * (Q : Matrix _ _ ℤ) = B) :
     h = mapGL ℚ P * g * mapGL ℚ Q := by
-  apply Units.ext; ext i j
-  simp only [Units.val_mul, Matrix.mul_apply, Matrix.map_apply, Fin.sum_univ_two, hA,
-    mapGL_coe_matrix, algebraMap_int_eq]
-  have hcast := congr_fun₂
-    (congr_arg (fun M : Matrix _ _ ℤ ↦ M.map (Int.cast : ℤ → ℚ)) hPQ) i j
-  simp only [Matrix.mul_apply, Matrix.map_apply, Fin.sum_univ_two, Int.cast_add,
-    Int.cast_mul] at hcast
-  simp only [SpecialLinearGroup.map, MonoidHom.coe_mk,
-    OneHom.coe_mk, RingHom.mapMatrix_apply, Int.coe_castRingHom, Matrix.map_apply]
-  rw [hB] at *; simp only [Matrix.map_apply] at hcast ⊢
-  linarith
+  have hA' : (g : Matrix (Fin 2) (Fin 2) ℚ) = A.map (algebraMap ℤ ℚ) := by
+    rw [algebraMap_int_eq]
+    simpa only [Int.coe_castRingHom] using hA
+  have hB' : (h : Matrix (Fin 2) (Fin 2) ℚ) = B.map (algebraMap ℤ ℚ) := by
+    rw [algebraMap_int_eq]
+    simpa only [Int.coe_castRingHom] using hB
+  have hP : ((SpecialLinearGroup.map (algebraMap ℤ ℚ) P : SpecialLinearGroup (Fin 2) ℚ) :
+      Matrix (Fin 2) (Fin 2) ℚ) = (P : Matrix (Fin 2) (Fin 2) ℤ).map (algebraMap ℤ ℚ) := by
+    ext i j
+    rfl
+  have hQ : ((SpecialLinearGroup.map (algebraMap ℤ ℚ) Q : SpecialLinearGroup (Fin 2) ℚ) :
+      Matrix (Fin 2) (Fin 2) ℚ) = (Q : Matrix (Fin 2) (Fin 2) ℤ).map (algebraMap ℤ ℚ) := by
+    ext i j
+    rfl
+  apply Units.ext
+  rw [Units.val_mul, Units.val_mul, mapGL_coe_matrix, mapGL_coe_matrix, hA', hB']
+  rw [hP, hQ]
+  have hcast := congrArg (fun M : Matrix (Fin 2) (Fin 2) ℤ => M.map (algebraMap ℤ ℚ)) hPQ
+  simpa only [Matrix.map_mul] using hcast.symm
 
 private lemma bar_eq_SL2_conj (N : ℕ) [NeZero N] (g : GL (Fin 2) ℚ) (hg : g ∈ (Gamma0_pair N).Δ)
     (A : Matrix (Fin 2) (Fin 2) ℤ)
@@ -569,11 +577,20 @@ private lemma mapGL_conj_val (g : GL (Fin 2) ℚ) (A : Matrix (Fin 2) (Fin 2) �
     (P Q : SpecialLinearGroup (Fin 2) ℤ) :
     ((mapGL ℚ P) * g * (mapGL ℚ Q) : GL (Fin 2) ℚ).val =
       ((P : Matrix (Fin 2) (Fin 2) ℤ) * A * (Q : Matrix _ _ ℤ)).map (Int.cast : ℤ → ℚ) := by
-  rw [Units.val_mul, Units.val_mul, mapGL_coe_matrix, mapGL_coe_matrix, hA]
-  simp only [SpecialLinearGroup.map, MonoidHom.coe_mk, OneHom.coe_mk, RingHom.mapMatrix_apply,
-    algebraMap_int_eq, Int.coe_castRingHom, SpecialLinearGroup.coe_mk]
-  ext i j
-  simp only [Matrix.mul_apply, Fin.sum_univ_two, Matrix.map_apply, Int.cast_add, Int.cast_mul]
+  have hA' : (g : Matrix (Fin 2) (Fin 2) ℚ) = A.map (algebraMap ℤ ℚ) := by
+    rw [algebraMap_int_eq]
+    simpa only [Int.coe_castRingHom] using hA
+  have hP : ((SpecialLinearGroup.map (algebraMap ℤ ℚ) P : SpecialLinearGroup (Fin 2) ℚ) :
+      Matrix (Fin 2) (Fin 2) ℚ) = (P : Matrix (Fin 2) (Fin 2) ℤ).map (algebraMap ℤ ℚ) := by
+    ext i j
+    rfl
+  have hQ : ((SpecialLinearGroup.map (algebraMap ℤ ℚ) Q : SpecialLinearGroup (Fin 2) ℚ) :
+      Matrix (Fin 2) (Fin 2) ℚ) = (Q : Matrix (Fin 2) (Fin 2) ℤ).map (algebraMap ℤ ℚ) := by
+    ext i j
+    rfl
+  rw [Units.val_mul, Units.val_mul, mapGL_coe_matrix, mapGL_coe_matrix, hA']
+  rw [hP, hQ]
+  simp only [algebraMap_int_eq, Int.coe_castRingHom, Matrix.map_mul_intCast]
 
 private lemma not_intCast_dvd_of_coprime (c N p : ℕ) (hp : p.Prime)
     (hc_cop : Nat.Coprime c N) (hpc : (p : ℤ) ∣ ↑c) : ¬((p : ℤ) ∣ ↑N) := by

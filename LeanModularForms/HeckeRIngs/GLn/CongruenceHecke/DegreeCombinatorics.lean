@@ -5,6 +5,8 @@ Authors: Chris Birkbeck
 -/
 import LeanModularForms.HeckeRIngs.GLn.CongruenceHecke.Presentation
 
+set_option backward.isDefEq.respectTransparency.types true
+
 /-!
 # Hecke Ring for Congruence Subgroups (Shimura §3.3) — Degree combinatorics
 
@@ -131,6 +133,7 @@ private lemma exists_coprime_shift (N s d : ℤ) (m : ℕ) (hm_pos : 0 < m)
     exact exists_coprime_shift_mul f d _ _ hab_int (iha (by omega)) (ihb (by omega))
 
 open CongruenceSubgroup in
+set_option backward.isDefEq.respectTransparency.types true in
 private lemma Gamma0_mN_mul_GammaN_eq_Gamma0 (N m : ℕ) [NeZero N] [NeZero (m * N)]
     (hm_pos : 0 < m) :
     ∀ γ : SL(2, ℤ), γ ∈ Gamma0 N →
@@ -142,7 +145,8 @@ private lemma Gamma0_mN_mul_GammaN_eq_Gamma0 (N m : ℕ) [NeZero N] [NeZero (m *
   clear hγ γ
   intro a b c d hdet hγ
   have hNc : (↑N : ℤ) ∣ c := by
-    rw [Gamma0_mem, ZMod.intCast_zmod_eq_zero_iff_dvd] at hγ
+    change (c : ZMod N) = 0 at hγ
+    rw [ZMod.intCast_zmod_eq_zero_iff_dvd] at hγ
     simpa [Matrix.cons_val_one, Matrix.head_cons] using hγ
   obtain ⟨s, hs⟩ := hNc
   have hd_N : IsCoprime d (↑N : ℤ) := ⟨a, -b * s, by linarith [hs ▸ hdet]⟩
@@ -167,14 +171,19 @@ private lemma Gamma0_mN_mul_GammaN_eq_Gamma0 (N m : ℕ) [NeZero N] [NeZero (m *
     exact ⟨s * v, by simp [σ₁₀]; ring⟩
   · rw [Gamma_mem']
     have hc_cast : (↑c : ZMod N) = 0 := by rw [hs]; push_cast; simp
+    let γ₀ : SL(2, ℤ) := ⟨!![a, b; c, d], by rwa [Matrix.det_fin_two_of]⟩
     have hmod : (Matrix.SpecialLinearGroup.map (Int.castRingHom (ZMod N))) σ =
-        (Matrix.SpecialLinearGroup.map (Int.castRingHom (ZMod N)))
-          ⟨!![a, b; c, d], by rwa [Matrix.det_fin_two_of]⟩ := by
+        (Matrix.SpecialLinearGroup.map (Int.castRingHom (ZMod N))) γ₀ := by
+      apply Subtype.ext
       ext i j
-      simp only [σ, σ₀₀, σ₀₁, σ₁₀, σ₁₁, SL_reduction_mod_hom_val,
-        Matrix.of_apply, Matrix.cons_val', Matrix.empty_val']
-      fin_cases i <;> fin_cases j <;> push_cast <;> simp [hc_cast]
-    rw [map_mul, map_inv, hmod, inv_mul_cancel]
+      change (Int.castRingHom (ZMod N)) (σ.val i j) =
+        (Int.castRingHom (ZMod N)) (γ₀.val i j)
+      fin_cases i <;> fin_cases j <;>
+        simp [hc_cast, σ, γ₀, σ₀₀, σ₀₁, σ₁₀, σ₁₁]
+    have hmul := (Matrix.SpecialLinearGroup.map (Int.castRingHom (ZMod N))).map_mul
+      (σ⁻¹) γ₀
+    rw [hmul, map_inv, hmod]
+    simp
 
 private lemma diagConj_entry (k : ℕ) (hk : 0 < k) (σ : GL (Fin 2) ℚ) (i j : Fin 2) :
     ((diagMat 2 (![1, k] : Fin 2 → ℕ) : GL (Fin 2) ℚ)⁻¹ * σ *
@@ -247,24 +256,27 @@ private lemma exists_conj_mem_Gamma0_N_of_mem_Gamma0_kN (N : ℕ) [NeZero N] (k 
     rw [Matrix.det_fin_two] at hdet
     have hq' : σ.1 1 0 = k * q := hq
     linear_combination hdet + σ.1 0 1 * hq'
-  refine ⟨⟨!![σ.1 0 0, k * σ.1 0 1; q, σ.1 1 1], by
-      rw [Matrix.det_fin_two_of]; linarith [h_det]⟩, ?_, ?_⟩
-  · rw [CongruenceSubgroup.Gamma0_mem, ZMod.intCast_zmod_eq_zero_iff_dvd]
+  let τ : SL(2, ℤ) := ⟨!![σ.1 0 0, k * σ.1 0 1; q, σ.1 1 1], by
+      rw [Matrix.det_fin_two_of]; linarith [h_det]⟩
+  refine ⟨τ, ?_, ?_⟩
+  · change (q : ZMod N) = 0
+    rw [ZMod.intCast_zmod_eq_zero_iff_dvd]
     simpa using hN_q
   · apply Units.ext
     ext i j
     rw [diagConj_entry k hk]
     have hq_q : ((σ.1 1 0 : ℤ) : ℚ) = (k : ℚ) * ((q : ℤ) : ℚ) := by exact_mod_cast hq
-    have h_τ_val : ∀ a b, ((mapGL ℚ ⟨!![σ.1 0 0, k * σ.1 0 1; q, σ.1 1 1], by
-        rw [Matrix.det_fin_two_of]; linarith [h_det]⟩).val a b : ℚ) =
-        ((!![σ.1 0 0, k * σ.1 0 1; q, σ.1 1 1] a b : ℤ) : ℚ) := by
-      intros; simp [mapGL_coe_matrix, Matrix.map_apply, algebraMap_int_eq]
+    have h_τ_val : ∀ a b, ((mapGL ℚ τ).val a b : ℚ) = ((τ.val a b : ℤ) : ℚ) := by
+      intros; simp only [mapGL_coe_matrix, map_apply_coe, RingHom.mapMatrix_apply,
+        Matrix.map_apply, algebraMap_int_eq, Int.coe_castRingHom]
     have h_σ_val : ∀ a b, ((mapGL ℚ σ).val a b : ℚ) = ((σ.val a b : ℤ) : ℚ) := by
-      intros; simp [mapGL_coe_matrix, Matrix.map_apply, algebraMap_int_eq]
+      intros; simp only [mapGL_coe_matrix, SpecialLinearGroup.map_apply_coe,
+        RingHom.mapMatrix_apply, Matrix.map_apply, algebraMap_int_eq, Int.coe_castRingHom]
     simp only [h_τ_val, h_σ_val]
     have h_div : ((σ.val 1 0 : ℤ) : ℚ) / (k : ℚ) = (q : ℚ) := by rw [hq_q]; field_simp
-    fin_cases i <;> fin_cases j <;> simp
-    · exact h_div.symm
+    fin_cases i <;> fin_cases j <;> simp [τ] <;> try norm_num
+    all_goals rw [h_div]
+    all_goals norm_num
 
 /-- **Diagonal stabilizer = Γ₀(kN)**: for the Hecke pair `(Γ₀(N), Δ₀(N))` and a
 diagonal element `diag(1,k)`, the double-coset stabilizer
@@ -377,8 +389,27 @@ private lemma finiteIndex_Gamma0_map_subgroupOf (N k : ℕ) [NeZero N] (hk : 0 <
     (((CongruenceSubgroup.Gamma0 (k * N)).map (mapGL ℚ)).subgroupOf
       (Gamma0_pair N).H).FiniteIndex := by
   rw [← stab_diag_eq_Gamma0 N k hk]
-  exact ⟨((Gamma0_pair N).h₁ (⟨diagMat 2 (![1, k] : Fin 2 → ℕ), diagMat_mem_Delta0_of_gcd N _
-    (fun i ↦ by fin_cases i <;> simp [hk]) (by simp)⟩ : (Gamma0_pair N).Δ).2).1⟩
+  let g : (Gamma0_pair N).Δ := ⟨diagMat 2 (![1, k] : Fin 2 → ℕ),
+    diagMat_mem_Delta0_of_gcd N _ (fun i ↦ by fin_cases i <;> simp [hk]) (by simp)⟩
+  have hcomm : Subgroup.Commensurable (MulAut.conj (g : GL (Fin 2) ℚ) •
+      (Gamma0_pair N).H) (Gamma0_pair N).H :=
+    (commensurator_mem_iff (Gamma0_pair N).H (g : GL (Fin 2) ℚ)).mp
+      ((Gamma0_pair N).h₁ g.property)
+  have hrel := hcomm.1
+  have hsub : (ConjAct.toConjAct (g : GL (Fin 2) ℚ) • (Gamma0_pair N).H) =
+      (MulAut.conj (g : GL (Fin 2) ℚ) • (Gamma0_pair N).H) := by
+    ext x
+    simp only [Subgroup.mem_pointwise_smul_iff_inv_smul_mem]
+    rw [show (ConjAct.toConjAct (g : GL (Fin 2) ℚ))⁻¹ =
+      ConjAct.toConjAct ((g : GL (Fin 2) ℚ)⁻¹) by simp]
+    rw [ConjAct.toConjAct_smul_eq_mulAut_conj]
+    simp only [MulAut.smul_def, map_inv]
+  have hrel' : (ConjAct.toConjAct (g : GL (Fin 2) ℚ) • (Gamma0_pair N).H).IsFiniteRelIndex
+      (Gamma0_pair N).H := by
+    rw [hsub]
+    exact hrel
+  letI := hrel'
+  exact inferInstance
 
 /-- **Gamma0 degree multiplicativity**: for coprime `m, n`,
 `deg(diag(1,m)) * deg(diag(1,n)) = deg(diag(1,mn))` at the `Γ₀(N)` level, i.e.

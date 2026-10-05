@@ -121,10 +121,14 @@ private lemma ker_entry_dvd (d : ℕ) [NeZero d] (γ : SpecialLinearGroup (Fin n
     (d : ℤ) ∣ (γ.val i j - (1 : Matrix (Fin n) (Fin n) ℤ) i j) := by
   rw [MonoidHom.mem_ker] at hγ
   have h := congr_fun₂ (congr_arg Subtype.val hγ) i j
-  simp [SpecialLinearGroup.map, RingHom.mapMatrix_apply, Matrix.map_apply] at h
-  rw [Matrix.one_apply] at h ⊢
+  simp only [SpecialLinearGroup.map_apply_coe, RingHom.mapMatrix_apply,
+    Matrix.map_apply] at h
+  simp only [Matrix.SpecialLinearGroup.coe_one, Matrix.one_apply] at h ⊢
   split_ifs at h ⊢
-  · exact (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp (by simp [h])
+  · apply (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp
+    change (Int.castRingHom (ZMod d)) (γ.val i j - 1) = 0
+    rw [map_sub, map_one]
+    exact sub_eq_zero.mpr h
   · rw [sub_zero]
     exact (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp h
 
@@ -359,11 +363,14 @@ lemma posDetInt_le_commensurator :
   have hK_le_gH : K ≤ ConjAct.toConjAct g • H := congruence_ker_image_le_conj n g A hA hAdet_ne
   have hK_le_ginvH : K ≤ ConjAct.toConjAct g⁻¹ • H :=
     congruence_ker_image_le_conj_inv n g A hA hAdet_ne
-  refine ⟨ne_zero_of_dvd_ne_zero hK_relIndex (Subgroup.relIndex_dvd_of_le_left H hK_le_gH), ?_⟩
+  refine ⟨⟨ne_zero_of_dvd_ne_zero hK_relIndex
+      (Subgroup.relIndex_dvd_of_le_left H hK_le_gH)⟩, ?_⟩
   have h1 : ConjAct.toConjAct g⁻¹ • (ConjAct.toConjAct g • H) = H := by
     rw [smul_smul, ← map_mul, inv_mul_cancel, map_one, one_smul]
-  rw [(Subgroup.relIndex_pointwise_smul (ConjAct.toConjAct g⁻¹) H
-    (ConjAct.toConjAct g • H)).symm.trans (by rw [h1])]
+  have h1' : MulAut.conj g⁻¹ • (MulAut.conj g • H) = H := by
+    simpa [ConjAct.toConjAct] using h1
+  apply (Subgroup.isFiniteRelIndex_iff_relIndex_ne_zero).2
+  rw [← Subgroup.relIndex_pointwise_smul (MulAut.conj g⁻¹) H (MulAut.conj g • H), h1']
   exact ne_zero_of_dvd_ne_zero hK_relIndex (Subgroup.relIndex_dvd_of_le_left H hK_le_ginvH)
 
 /-- The standard arithmetic group pair for number theory:

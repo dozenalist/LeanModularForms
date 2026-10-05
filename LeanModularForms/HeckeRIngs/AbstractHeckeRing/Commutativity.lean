@@ -62,7 +62,7 @@ lemma bar_doubleCoset_eq (g₁ g₂ : G)
       DoubleCoset.doubleCoset g₂ P.H P.H) :
     DoubleCoset.doubleCoset (ι.bar g₁) P.H P.H =
     DoubleCoset.doubleCoset (ι.bar g₂) P.H P.H := by
-  obtain ⟨h₁, hh₁, h₂, hh₂, hprod⟩ := (DoubleCoset.eq P.H P.H _ _).mp
+  obtain ⟨h₁, hh₁, h₂, hh₂, hprod⟩ := (DoubleCoset.eq (H := P.H) (K := P.H)).mp
     (DoubleCoset.mk_eq_of_doubleCoset_eq h)
   rw [show ι.bar g₂ = ι.bar h₂ * ι.bar g₁ * ι.bar h₁ from by
     rw [hprod, bar_mul, bar_mul, mul_assoc]]

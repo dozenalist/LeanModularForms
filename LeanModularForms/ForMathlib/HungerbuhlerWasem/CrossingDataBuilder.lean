@@ -401,6 +401,9 @@ theorem inv_sub_mul_deriv_intervalIntegrable
   have h_cont : ContinuousOn (fun t => (γf t - s)⁻¹) (Set.uIcc a b) := by
     rw [Set.uIcc_of_le hab]
     refine (γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend.continuousOn.sub
-      continuousOn_const).inv₀ fun t ht h_eq => h_ne t ht ?_
-    linear_combination h_eq
+      continuousOn_const).inv₀ ?_
+    intro t ht h_eq
+    apply h_ne t ht
+    apply sub_eq_zero.mp
+    simpa [γf] using h_eq
   exact (hγ_int.mul_continuousOn h_cont).congr (fun t _ => by ring)

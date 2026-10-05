@@ -16,7 +16,7 @@ package «LeanModularForms» where
 --   "https://github.com/leanprover/verso-blueprint" @ "v4.30.0"
 
 require mathlib from git
-  "https://github.com/leanprover-community/mathlib4.git" @ "v4.31.0-rc2"
+  "https://github.com/leanprover-community/mathlib4.git" @ "v4.35.0-rc3"
 
 @[default_target]
 lean_lib «LeanModularForms» where

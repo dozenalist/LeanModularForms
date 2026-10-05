@@ -36,10 +36,14 @@ noncomputable def smulOrbit (g : P.Δ) (β : P.Δ) :
     (⟦⟨(β : G) * (i.out : G) * (g : G),
       delta_mul_mem P.H P.Δ i.out β g P.h₀⟩⟧ : HeckeLeftCoset P)) ⊤
 
+set_option backward.isDefEq.respectTransparency.types false in
 /-- The smul orbit of any left coset under any double coset is nonempty. -/
 lemma smulOrbit_nonempty (g : P.Δ) (β : P.Δ) :
-    (smulOrbit P g β).Nonempty := by simp [smulOrbit]
+    (smulOrbit P g β).Nonempty := by
+  simp only [smulOrbit, Finset.image_nonempty]
+  exact ⟨QuotientGroup.mk (1 : P.H), Finset.mem_univ _⟩
 
+set_option backward.isDefEq.respectTransparency.types false in
 /-- The orbit is invariant under left coset equivalence: if `β₁H = β₂H`, then
     `smulOrbit g β₁ = smulOrbit g β₂`. This is the key API lemma that lets us
     replace `HeckeLeftCoset.rep j` with any representative of `j`. -/
@@ -99,6 +103,7 @@ lemma smul_eq_sum (T : 𝕋 P Z) (m : HeckeModule P Z) :
 noncomputable instance instHSMulHeckeModule : HSMul (𝕋 P Z) (HeckeModule P Z) (HeckeModule P Z) :=
   inferInstance
 
+set_option backward.isDefEq.respectTransparency.types false in
 /-- The action of a basis Hecke element on a basis module element. -/
 lemma single_smul_single (t : HeckeCoset P) (m : HeckeLeftCoset P) (a b : Z) :
     (instHSMulHeckeModule P Z).hSMul ((Finsupp.single t a) : 𝕋 P Z)
@@ -123,7 +128,8 @@ lemma smul_add_left (T₁ T₂ : 𝕋 P Z) (m : HeckeModule P Z) :
   simp only [smul_eq_sum]
   refine Eq.trans (Finsupp.sum_add_index (f := T₁) (g := T₂) ?_ ?_) ?_
   · intro D1 _
-    simp only [zero_mul, Finsupp.single_zero, Finset.sum_const_zero, Finsupp.sum_fun_zero]
+    simp only [zero_mul, Finsupp.single_zero, Finset.sum_const_zero]
+    simp only [Finsupp.sum, Finset.sum_const_zero]
     rfl
   · intro D1 _ y b₂
     simp only [Finsupp.sum]
@@ -186,6 +192,7 @@ lemma smul_add_right (T : 𝕋 P Z) (m₁ m₂ : HeckeModule P Z) :
       Finsupp.single i (b₁ * c))) = _
   exact Finsupp.sum_add
 
+set_option backward.isDefEq.respectTransparency.types false in
 /-- The smul orbits of distinct double cosets acting on the same left coset are disjoint. -/
 lemma smulOrbit_disjoint_of_ne (g₁ g₂ : P.Δ) (β : P.Δ) (hne : (⟦g₁⟧ : HeckeCoset P) ≠ ⟦g₂⟧) :
     Disjoint (smulOrbit P g₁ β) (smulOrbit P g₂ β) := by
@@ -246,7 +253,9 @@ private lemma smul_one_eval (T : 𝕋 P Z) (D : HeckeCoset P) (m : HeckeLeftCose
         (Finset.disjoint_left.mp
           (smulOrbit_disjoint_of_ne P (HeckeCoset.rep D) (HeckeCoset.rep D')
             (HeckeLeftCoset.rep (HeckeLeftCoset.one P))
-            (by simp only [HeckeCoset.rep, Quotient.out_eq]; exact hne.symm)) hm)
+            (by
+              rw [HeckeCoset.mk_rep D, HeckeCoset.mk_rep D']
+              exact hne.symm)) hm)
   · intro hns
     have h0 : T.toFun D = 0 := Finsupp.notMem_support_iff.mp hns
     exact Finset.sum_eq_zero fun x _ ↦ by simp [h0]

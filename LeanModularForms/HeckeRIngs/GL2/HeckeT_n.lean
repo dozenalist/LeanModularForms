@@ -265,7 +265,11 @@ lemma moebius_conj {p : ℕ} [Fact p.Prime] (hp : Nat.Prime p)
       simp only [hA_def, hB_def]; linear_combination hdet
     simpa only [τ_mat] using det_fin_two_moebius hAB hq_eq
   refine ⟨⟨τ_mat, hτ_det⟩, ?_, ?_, ?_, ?_⟩
-  · apply Units.ext; ext i j; fin_cases i <;> fin_cases j <;>
+  · apply Units.ext
+    change (T_p_upper p hp.pos b.val).val * (σ.val.map (Int.cast : ℤ → ℚ)) =
+      (τ_mat.map (Int.cast : ℤ → ℚ)) *
+        (T_p_upper p hp.pos (moebiusFin' p hp M b).val).val
+    ext i j; fin_cases i <;> fin_cases j <;>
       simp only [GeneralLinearGroup.coe_mul, mul_apply, T_p_upper_coe, Fin.isValue,
         Matrix.SpecialLinearGroup.mapGL_coe_matrix, Fin.sum_univ_two,
         algebraMap_int_eq, hτ_mat_def, hA_def, hmoeb] <;>
@@ -759,6 +763,9 @@ private lemma T_p_lower_upper_shift (p q : ℕ) (hp : 0 < p) (hq : 0 < q) (b : �
     mapGL ℚ (shiftSL' (↑(q * b / p : ℕ) : ℤ)) *
       ((T_p_upper p hp (q * b % p) : GL (Fin 2) ℚ) * T_p_lower q hq) := by
   apply Units.ext
+  change (T_p_lower q hq).val * (T_p_upper p hp b).val =
+    ((shiftSL' (↑(q * b / p : ℕ) : ℤ)).val.map (Int.cast : ℤ → ℚ)) *
+      ((T_p_upper p hp (q * b % p)).val * (T_p_lower q hq).val)
   ext i j
   fin_cases i <;> fin_cases j <;>
     simp [T_p_lower, T_p_upper, shiftSL', mapGL, GeneralLinearGroup.mkOfDetNeZero,

@@ -176,14 +176,25 @@ section BadPrime
 variable (p : ℕ)
 
 /-- The lower-unipotent `Γ₀(N)`-element `[[1,0],[N·r,1]]`. -/
-noncomputable def lunipH (r : ℕ) : GL (Fin 2) ℚ :=
-  mapGL ℚ (⟨!![1, 0; (N : ℤ) * r, 1], by simp [Matrix.det_fin_two]⟩ : SL(2, ℤ))
+private def lunipH_SL (r : ℕ) : SL(2, ℤ) :=
+  ⟨!![1, 0; (N : ℤ) * r, 1], by simp [Matrix.det_fin_two]⟩
+
+noncomputable def lunipH (r : ℕ) : GL (Fin 2) ℚ := mapGL ℚ (lunipH_SL (N := N) r)
 
 lemma lunipH_mem (r : ℕ) : lunipH (N := N) r ∈ (Gamma0_pair N).H :=
   Subgroup.mem_map_of_mem _ (by
     rw [CongruenceSubgroup.Gamma0_mem]
-    show (((!![1, 0; (N : ℤ) * r, 1] : Matrix (Fin 2) (Fin 2) ℤ) 1 0 : ℤ) : ZMod N) = 0
-    simp)
+    simp [lunipH_SL])
+
+private lemma lunipH_coe (r : ℕ) :
+    (lunipH (N := N) r : Matrix (Fin 2) (Fin 2) ℚ) =
+      !![(1 : ℚ), 0; (N : ℚ) * r, 1] := by
+  rw [lunipH, Matrix.SpecialLinearGroup.mapGL_coe_matrix]
+  ext i j
+  change ((lunipH_SL (N := N) r).val.map (algebraMap ℤ ℚ)) i j = _
+  fin_cases i <;> fin_cases j <;>
+    simp [lunipH_SL, Matrix.map_apply, algebraMap_int_eq,
+      Matrix.of_apply, Fin.isValue, Int.cast_mul]
 
 lemma lunipRep_eq_lunipH_mul_diag (hp : 0 < p) (r : ℕ) :
     lunipRep (N := N) p hp r =
@@ -193,8 +204,8 @@ lemma lunipRep_eq_lunipH_mul_diag (hp : 0 < p) (r : ℕ) :
   have hpos : ∀ m : Fin 2, 0 < (![1, p] : Fin 2 → ℕ) m := fun m ↦ by
     fin_cases m <;> simp [hp]
   simp only [Units.val_mul, lunipRep_coe, diag_1p_delta_Gamma0, diagMat_val _ _ hpos,
-    Matrix.mul_apply, Fin.sum_univ_two, Matrix.diagonal_apply, lunipH,
-    mapGL_coe_matrix, algebraMap_int_eq]
+    Matrix.mul_apply, Fin.sum_univ_two, Matrix.diagonal_apply]
+  rw [lunipH_coe]
   fin_cases i <;> fin_cases j <;> simp
 
 lemma lunipRep_mem_toSet (hp : Nat.Prime p) (r : ℕ) :

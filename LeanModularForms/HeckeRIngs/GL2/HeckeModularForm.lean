@@ -303,13 +303,19 @@ private lemma heckeSlash_one (k : ℤ) (f : ℍ → ℂ) (hf : ∀ γ ∈ 𝒮�
 @[simp] lemma heckeSum_one (k : ℤ) : heckeSum k (1 : HeckeAlgebra 2) = 1 := by
   rw [HeckeRing.one_def, heckeSum_T_single, heckeOperatorLinear_one, one_smul]
 
-private lemma heckeSlashExt_zsmul (k : ℤ) (n : ℤ) (T : HeckeAlgebra 2) (f : ℍ → ℂ) :
+private lemma heckeSlashExt_zsmul (k : ℤ) (n : ℤ) (T : 𝕋 (GL_pair 2) ℤ) (f : ℍ → ℂ) :
     heckeSlashExt k (n • T) f = n • heckeSlashExt k T f := by
   simp only [heckeSlashExt]
-  rw [show ((n • T : HeckeAlgebra 2).sum fun D c ↦ c • heckeSlash k D f) =
-      T.sum (fun D c ↦ (n * c) • heckeSlash k D f) from
-    Finsupp.sum_smul_index fun _ ↦ zero_smul .., Finsupp.smul_sum]
-  exact Finsupp.sum_congr fun D _ ↦ mul_smul ..
+  have hsmi := Finsupp.sum_smul_index (g := T) (b := n)
+    (h := fun D c ↦ c • heckeSlash k D f) fun _ ↦ zero_smul ..
+  rw [show ((n • T : 𝕋 (GL_pair 2) ℤ).sum
+      fun D c ↦ c • heckeSlash k D f) =
+    T.sum (fun D c ↦ (n * c) • heckeSlash k D f) from hsmi]
+  simp only [Finsupp.sum]
+  rw [Finset.smul_sum]
+  apply Finset.sum_congr rfl
+  intro D hD
+  rw [mul_smul]
 
 private lemma heckeSum_mul_T_single (k : ℤ) (D₁ D₂ : HeckeCoset (GL_pair 2)) (a b : ℤ) :
     heckeSum k (T_single (GL_pair 2) ℤ D₁ a * T_single (GL_pair 2) ℤ D₂ b) =

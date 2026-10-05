@@ -262,8 +262,9 @@ private lemma slTransvec_mul (i j : Fin n) (hij : i ≠ j) (a b : ℤ) :
     slTransvec n i j hij a * slTransvec n i j hij b =
       slTransvec n i j hij (a + b) := by
   apply Subtype.ext
-  simpa only [slTransvec, Matrix.TransvectionStruct.toMatrix, SpecialLinearGroup.coe_mul] using
-    Matrix.transvection_mul_transvection_same (n := Fin n) (i := i) (j := j) hij a b
+  change Matrix.transvection i j a * Matrix.transvection i j b =
+    Matrix.transvection i j (a + b)
+  exact Matrix.transvection_mul_transvection_same (n := Fin n) (i := i) (j := j) hij a b
 
 omit [NeZero n] in
 private lemma slTransvec_congMod (d : ℕ) (i j : Fin n) (hij : i ≠ j) (c : ℤ)
@@ -437,7 +438,7 @@ private lemma conjugate_congruent_mem_SLnZ (a : Fin n → ℕ) (ha : ∀ i, 0 < 
       simp [mapGL_coe_matrix, algebraMap_int_eq, RingHom.mapMatrix_apply]
     have hM_val : (↑(mapGL ℚ (⟨M, hM_det⟩ : SpecialLinearGroup (Fin n) ℤ)) : Matrix _ _ ℚ) =
         M.map (Int.cast) := by
-      simp [mapGL_coe_matrix, algebraMap_int_eq, RingHom.mapMatrix_apply]
+      rfl
     simp only [Units.val_mul, hτ_val, hM_val, diagMat_val _ _ ha]
     have h_diag_map : (Matrix.diagonal fun i ↦ (a i : ℤ)).map (Int.cast : ℤ → ℚ) =
         Matrix.diagonal fun i ↦ (a i : ℚ) := Matrix.diagonal_map (by simp)
@@ -482,7 +483,7 @@ private lemma inv_conjugate_congruent_mem_SLnZ (b : Fin n → ℕ) (hb : ∀ i, 
       simp [mapGL_coe_matrix, algebraMap_int_eq, RingHom.mapMatrix_apply]
     have hN_val : (↑(mapGL ℚ (⟨N, hN_det⟩ : SpecialLinearGroup (Fin n) ℤ)) : Matrix _ _ ℚ) =
         N.map (Int.cast) := by
-      simp [mapGL_coe_matrix, algebraMap_int_eq, RingHom.mapMatrix_apply]
+      rfl
     simp only [Units.val_mul, hτ_val, hN_val, diagMat_val _ _ hb]
     have h_diag_map : (Matrix.diagonal fun i ↦ (b i : ℤ)).map (Int.cast : ℤ → ℚ) =
         Matrix.diagonal fun i ↦ (b i : ℚ) := Matrix.diagonal_map (by simp)
@@ -599,8 +600,8 @@ private lemma GLnQ_mem_SLnZ_of_coprime_scaling (C : GL (Fin n) ℚ)
   rw [MonoidHom.mem_range]
   refine ⟨⟨N, hN_det⟩, ?_⟩
   apply Units.ext
-  simp only [mapGL_coe_matrix, map_apply_coe, RingHom.mapMatrix_apply]
   ext i j
+  change ((N i j : ℤ) : ℚ) = (↑C : Matrix (Fin n) (Fin n) ℚ) i j
   simpa only [Matrix.map_apply, algebraMap_int_eq, eq_intCast] using (hN_eq i j).symm
 
 omit [NeZero n] in

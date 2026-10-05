@@ -123,8 +123,13 @@ public lemma qExpansion_coeff_eq_zero_of_cuspFunction_isBigO_pow
   set ε : ℝ := ‖(qExpansion h f).coeff n‖ / 2
   have hε : 0 < ε := half_pos (norm_pos_iff.2 hne)
   set K : ℝ := ‖((2 * π * Complex.I : ℂ)⁻¹)‖ * (2 * π * C')
-  have hKpos : 0 < K :=
-    mul_pos (by simp [Real.pi_ne_zero]) (by positivity)
+  have hKpos : 0 < K := by
+    have hden : (2 * π * Complex.I : ℂ) ≠ 0 := by
+      exact mul_ne_zero (mul_ne_zero (by norm_num) (Complex.ofReal_ne_zero.mpr Real.pi_ne_zero))
+        Complex.I_ne_zero
+    apply mul_pos
+    · exact norm_pos_iff.mpr (inv_ne_zero hden)
+    · exact mul_pos (mul_pos (by norm_num) Real.pi_pos) hC'pos
   set R : ℝ := min (δ / 2) (min (1 / 2) (ε / (2 * K)))
   have hR0 : 0 < R :=
     lt_min (by linarith) (lt_min (by norm_num) (div_pos hε (by positivity)))

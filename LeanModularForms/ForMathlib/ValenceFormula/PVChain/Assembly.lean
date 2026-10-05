@@ -379,10 +379,13 @@ private lemma integrableOn_logDeriv_mul_deriv_farSet
     have : IsClosed (⋂ (s : ℂ) (_ : s ∈ S₀), {t : ℝ | ε ≤ ‖γ t - s‖}) :=
       isClosed_iInter fun s => isClosed_iInter fun _ =>
         isClosed_le continuous_const (by fun_prop)
-    convert this using 1
-    ext t
-    simp only [mem_iInter, mem_setOf_eq]
-    exact Iff.rfl
+    have hset : {t : ℝ | ∀ s ∈ S₀, ε ≤ ‖γ t - (s : ℂ)‖} =
+        ⋂ (s : ℂ) (_ : s ∈ S₀), {t : ℝ | ε ≤ ‖γ t - s‖} := by
+      ext t
+      simp only [Set.mem_setOf_eq, Set.mem_iInter]
+    change IsClosed ({t : ℝ | ∀ s ∈ S₀, ε ≤ ‖γ t - (s : ℂ)‖} : Set ℝ)
+    rw [hset]
+    exact this
   have hK'_meas : MeasurableSet K' := hK'_compact.isClosed.measurableSet
   have h_ne : ∀ t ∈ K', g (γ t) ≠ 0 := fun t ⟨ht_Icc, h_far⟩ h_zero => by
     have := h_far _ (Finset.mem_coe.mp (h_capture t ht_Icc h_zero))
@@ -460,10 +463,18 @@ private lemma pvIntegrand_intervalIntegrable
     apply measurableSet_uIoc.inter
     apply MeasurableSet.compl
     suffices h : IsClosed (⋃ s ∈ (S₀ : Set ℂ), {t : ℝ | ‖γ t - s‖ ≤ ε}) by
-      convert h.measurableSet using 1
-      ext t
-      simp only [mem_iUnion, mem_setOf_eq, Finset.mem_coe, exists_prop]
-      exact Iff.rfl
+      have hset : (⋃ s ∈ (S₀ : Set ℂ), {t : ℝ | ‖γ t - s‖ ≤ ε}) =
+          {t : ℝ | ∃ s ∈ (S₀ : Set ℂ), ‖γ t - s‖ ≤ ε} := by
+        ext t
+        simp only [Set.mem_iUnion, Set.mem_setOf_eq]
+        constructor
+        · rintro ⟨s, hs, hdist⟩
+          exact ⟨s, hs, hdist⟩
+        · rintro ⟨s, hs, hdist⟩
+          exact ⟨s, hs, hdist⟩
+      change MeasurableSet ({t : ℝ | ∃ s ∈ (S₀ : Set ℂ), ‖γ t - s‖ ≤ ε} : Set ℝ)
+      rw [← hset]
+      exact h.measurableSet
     exact S₀.finite_toSet.isClosed_biUnion fun s _ =>
       isClosed_le (by fun_prop) continuous_const
   rw [intervalIntegrable_iff]

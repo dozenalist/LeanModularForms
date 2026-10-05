@@ -134,37 +134,34 @@ theorem upperUniTri_mem_range (d : ℕ) [NeZero d] (t : ZMod d) :
         SpecialLinearGroup (Fin 2) (ZMod d)) := by
   obtain ⟨t₀, rfl⟩ := ZMod.intCast_surjective t
   refine ⟨⟨!![1, t₀; 0, 1], by rw [det_fin_two]; simp [cons_val_zero, cons_val_one]⟩, ?_⟩
+  apply Subtype.ext
+  change (!![1, t₀; 0, 1] : Matrix (Fin 2) (Fin 2) ℤ).map
+      (Int.castRingHom (ZMod d)) =
+    (!![1, (t₀ : ZMod d); 0, 1] : Matrix (Fin 2) (Fin 2) (ZMod d))
   ext i j
-  simp [map_apply_coe, RingHom.mapMatrix_apply, map_apply]
-  fin_cases i <;> fin_cases j <;> simp
+  fin_cases i <;> fin_cases j <;>
+    simp [Matrix.map_apply, Matrix.of_apply, Matrix.cons_val_zero, Matrix.cons_val_one]
 
 /-- If two SL₂ elements share the same first column, their quotient has
 `(1, 0)` entry equal to `0`. -/
 theorem inv_mul_10_eq_zero {R : Type*} [CommRing R] (M g : SpecialLinearGroup (Fin 2) R)
     (h0 : M 0 0 = g 0 0) (h1 : M 1 0 = g 1 0) : (M⁻¹ * g) 1 0 = 0 := by
-  induction M using fin_two_induction with
-  | _ a₁ b₁ c₁ d₁ hdet₁ =>
-  induction g using fin_two_induction with
-  | _ a₂ b₂ c₂ d₂ hdet₂ =>
-    simp at h0 h1
-    subst h0; subst h1
-    simp [coe_inv, adjugate_fin_two, mul_apply, Fin.sum_univ_two, of_apply,
-      cons_val_zero, cons_val_one]
-    ring
+  rw [Matrix.SpecialLinearGroup.coe_mul, Matrix.SpecialLinearGroup.coe_inv,
+    Matrix.adjugate_fin_two, Matrix.mul_apply, Fin.sum_univ_two]
+  simp only [Matrix.of_apply, cons_val_zero, cons_val_one, h0, h1]
+  ring_nf
 
 /-- If two SL₂ elements share the same first column, their quotient has
 `(0, 0)` entry equal to `1`. -/
 theorem inv_mul_00_eq_one {R : Type*} [CommRing R] (M g : SpecialLinearGroup (Fin 2) R)
     (h0 : M 0 0 = g 0 0) (h1 : M 1 0 = g 1 0) : (M⁻¹ * g) 0 0 = 1 := by
-  induction M using fin_two_induction with
-  | _ a₁ b₁ c₁ d₁ hdet₁ =>
-  induction g using fin_two_induction with
-  | _ a₂ b₂ c₂ d₂ hdet₂ =>
-    simp at h0 h1
-    subst h0; subst h1
-    simp [coe_inv, adjugate_fin_two, mul_apply, Fin.sum_univ_two, of_apply,
-      cons_val_zero, cons_val_one]
-    linear_combination hdet₁
+  have hdet : M 0 0 * M 1 1 - M 0 1 * M 1 0 = 1 := by
+    simpa only [Matrix.det_fin_two] using M.2
+  rw [Matrix.SpecialLinearGroup.coe_mul, Matrix.SpecialLinearGroup.coe_inv,
+    Matrix.adjugate_fin_two, Matrix.mul_apply, Fin.sum_univ_two]
+  simp only [Matrix.of_apply, cons_val_zero, cons_val_one, h0, h1]
+  rw [← h0, ← h1]
+  linear_combination hdet
 
 /-- **Strong approximation for SL₂**: The reduction map `SL₂(ℤ) → SL₂(ℤ/dℤ)` is surjective.
 

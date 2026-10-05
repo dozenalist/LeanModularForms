@@ -6,6 +6,7 @@ Authors:
 import Mathlib.Analysis.Calculus.ContDiff.Defs
 import Mathlib.Analysis.Normed.Operator.NormedSpace
 import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
+import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.PVInfrastructure.GammaAnalysis
 
 /-!

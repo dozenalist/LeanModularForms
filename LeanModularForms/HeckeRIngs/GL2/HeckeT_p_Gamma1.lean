@@ -67,7 +67,10 @@ noncomputable def sigma_p_specific (N p : ℕ) [NeZero N] (hpN : Nat.Coprime p N
 /-- `σ_p_specific` lies in `Gamma0 N`: lower-left entry `N · m ≡ 0 mod N`. -/
 lemma sigma_p_specific_mem_Gamma0 (N p : ℕ) [NeZero N] (hpN : Nat.Coprime p N) :
     sigma_p_specific N p hpN ∈ Gamma0 N := by
-  simp [Gamma0_mem, sigma_p_specific]
+  rw [Gamma0_mem, sigma_p_specific_val]
+  change (((N : ℤ) * mIdxOfCoprime N p hpN : ℤ) : ZMod N) = 0
+  exact (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).2
+    ⟨mIdxOfCoprime N p hpN, by push_cast; ring⟩
 
 /-- The `Gamma0MapUnits` of `σ_p_specific` is `(p : ZMod N)ˣ`. -/
 lemma Gamma0MapUnits_sigma_p_specific (N p : ℕ) [NeZero N] (hpN : Nat.Coprime p N) :

@@ -83,9 +83,11 @@ private lemma Gamma1_map_commensurable_SLnZ (N : ℕ) [NeZero N] :
     Subgroup.Commensurable ((Gamma1 N).map (mapGL ℚ))
       (Subgroup.map (mapGL ℚ : SpecialLinearGroup (Fin 2) ℤ →* GL (Fin 2) ℚ) ⊤) := by
   constructor
-  · rw [Subgroup.relIndex_map_map_of_injective _ _ mapGL_injective, Subgroup.relIndex_top_right]
+  · apply (Subgroup.isFiniteRelIndex_iff_relIndex_ne_zero).2
+    rw [Subgroup.relIndex_map_map_of_injective _ _ mapGL_injective, Subgroup.relIndex_top_right]
     exact Subgroup.FiniteIndex.index_ne_zero
-  · rw [Subgroup.relIndex_map_map_of_injective _ _ mapGL_injective, Subgroup.relIndex_top_left]
+  · apply (Subgroup.isFiniteRelIndex_iff_relIndex_ne_zero).2
+    rw [Subgroup.relIndex_map_map_of_injective _ _ mapGL_injective, Subgroup.relIndex_top_left]
     exact one_ne_zero
 
 /-- `Δ₁(N) ≤ commensurator(Γ₁(N))`. The proof chains:

@@ -55,6 +55,12 @@ private lemma glMap_mapGL_eq_R (s : SL(2, ℤ)) :
   simp only [glMap, Matrix.GeneralLinearGroup.map]
   exact (IsScalarTower.algebraMap_apply ℤ ℚ ℝ (s.1 i j)).symm
 
+private lemma mapGL_rat_coe (s : SL(2, ℤ)) :
+    ((mapGL ℚ s : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ) =
+      s.val.map (algebraMap ℤ ℚ) := by
+  rw [Matrix.SpecialLinearGroup.mapGL_coe_matrix]
+  rfl
+
 private lemma slash_mapGL_Q_Gamma1 (M : ℕ) [NeZero M] (k : ℤ) (S : SL(2, ℤ))
     (hS : S ∈ Gamma1 M) (g : ModularForm ((Gamma1 M).map (mapGL ℝ)) k) :
     ⇑g ∣[k] (mapGL ℚ S : GL (Fin 2) ℚ) = ⇑g := by
@@ -65,15 +71,20 @@ private lemma slash_mapGL_Q_Gamma1 (M : ℕ) [NeZero M] (k : ℤ) (S : SL(2, ℤ
 open Matrix in
 private lemma T_p_upper_mod (p : ℕ) (hp : 0 < p) (a : ℕ) :
     T_p_upper p hp a = mapGL ℚ (shiftSL (↑(a / p : ℕ) : ℤ)) * T_p_upper p hp (a % p) := by
+  have hshift : (mapGL ℚ (shiftSL (↑(a / p : ℕ) : ℤ)) : GL (Fin 2) ℚ).val =
+      !![(1 : ℚ), ((a / p : ℕ) : ℚ); 0, 1] := by
+    rw [mapGL_rat_coe]
+    ext i j
+    fin_cases i <;> fin_cases j <;>
+      simp [shiftSL, Matrix.map_apply, algebraMap_int_eq, Matrix.of_apply] <;> norm_cast
   apply Units.ext
   ext i j
-  simp only [T_p_upper, shiftSL, mapGL_coe_matrix, Matrix.GeneralLinearGroup.mkOfDetNeZero,
-    Matrix.mul_apply, Fin.sum_univ_two, Units.val_mul]
+  simp only [T_p_upper, Matrix.GeneralLinearGroup.mkOfDetNeZero,
+    Matrix.mul_apply, Fin.sum_univ_two, Units.val_mul, hshift]
   fin_cases i <;> fin_cases j <;> simp [Matrix.cons_val_zero, Matrix.cons_val_one]
-  rw [← Int.natCast_ediv]
-  simp only [Int.cast_natCast]
-  exact_mod_cast show (a : ℤ) = (a % p : ℤ) + (a / p : ℤ) * (p : ℤ) by
-    have := Int.emod_add_mul_ediv (a : ℤ) (p : ℤ); linarith
+  have hnat : a = a % p + a / p * p := by
+    nlinarith [Nat.mod_add_div a p]
+  exact_mod_cast hnat
 
 private lemma slash_T_p_upper_mod (M : ℕ) [NeZero M] (k : ℤ) (p : ℕ) (hp : 0 < p) (a : ℕ)
     (g : ModularForm ((Gamma1 M).map (mapGL ℝ)) k) :

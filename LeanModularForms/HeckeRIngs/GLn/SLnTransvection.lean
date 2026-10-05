@@ -40,19 +40,23 @@ private lemma slTransvecG_mul_entry {m : ℕ} [NeZero m] (i j : Fin m) (hij : i 
     (σ : Matrix.SpecialLinearGroup (Fin m) ℤ) (a b : Fin m) :
     (slTransvecG i j hij c * σ).1 a b =
     if a = i then σ.1 i b + c * σ.1 j b else σ.1 a b := by
-  simp only [Matrix.SpecialLinearGroup.coe_mul, slTransvecG]
-  split_ifs with hai
-  · subst hai; simp [Matrix.transvection, Matrix.add_mul]
-  · simp [Matrix.transvection, Matrix.add_mul, hai]
+  change (Matrix.transvection i j c * σ.1) a b = _
+  split_ifs with ha
+  · subst a
+    exact Matrix.transvection_mul_apply_same (i := i) (j := j) (b := b) (c := c) (M := σ.1)
+  · exact Matrix.transvection_mul_apply_of_ne (i := i) (j := j) (a := a) (b := b)
+      (ha := ha) (c := c) (M := σ.1)
 
 private lemma slTransvecG_mul_right_entry {m : ℕ} [NeZero m] (i j : Fin m) (hij : i ≠ j) (c : ℤ)
     (σ : Matrix.SpecialLinearGroup (Fin m) ℤ) (a b : Fin m) :
     (σ * slTransvecG i j hij c).1 a b =
     if b = j then σ.1 a j + c * σ.1 a i else σ.1 a b := by
-  simp only [Matrix.SpecialLinearGroup.coe_mul, slTransvecG]
-  split_ifs with hbj
-  · subst hbj; simp [Matrix.transvection, Matrix.mul_add, mul_comm]
-  · simp [Matrix.transvection, Matrix.mul_add, hbj]
+  change (σ.1 * Matrix.transvection i j c) a b = _
+  split_ifs with hb
+  · subst b
+    exact Matrix.mul_transvection_apply_same (i := i) (j := j) (a := a) (c := c) (M := σ.1)
+  · exact Matrix.mul_transvection_apply_of_ne (i := i) (j := j) (a := a) (b := b)
+      (hb := hb) (c := c) (M := σ.1)
 
 private lemma isTransvec_append {m : ℕ} (L₁ L₂ : List (Matrix.SpecialLinearGroup (Fin m) ℤ))
     (h₁ : ∀ E ∈ L₁, IsTransvec E) (h₂ : ∀ E ∈ L₂, IsTransvec E) :

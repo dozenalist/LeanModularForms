@@ -5,6 +5,8 @@ Authors: Chris Birkbeck
 -/
 import LeanModularForms.HeckeRIngs.GL2.HeckeRingHomCharSpace
 
+set_option synthInstance.maxHeartbeats 50000
+
 /-!
 # The Fricke operator on `M_k(Γ₁(N))`
 

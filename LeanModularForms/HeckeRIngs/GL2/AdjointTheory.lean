@@ -16,6 +16,8 @@ import LeanModularForms.HeckeRIngs.GL2.HeckeT_p_Gamma1
 import LeanModularForms.Modularforms.PeterssonInner
 import LeanModularForms.Modularforms.PeterssonLevelN
 
+set_option backward.isDefEq.respectTransparency.types true
+
 /-!
 # Hecke adjoint theory: core cusp/Hecke infrastructure
 
@@ -264,7 +266,7 @@ noncomputable def adjointGamma0Rep (p N : ℕ) (hpN : Nat.Coprime p N) : ↥(Gam
       have hbez := coprime_bezout_aux hpN
       simp only [Matrix.det_fin_two_of]
       linarith⟩, by
-      rw [Gamma0_mem]
+      change ((N : ℤ) : ZMod N) = 0
       simp⟩
 
 /-- The mod-`N` unit attached to `adjointGamma0Rep` is `(unitOfCoprime p)⁻¹`. -/

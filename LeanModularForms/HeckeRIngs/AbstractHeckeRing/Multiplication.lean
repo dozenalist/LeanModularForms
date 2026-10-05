@@ -281,7 +281,7 @@ private lemma nonempty_witness_of_doubleCoset_eq (g₁ g₂ : P.Δ) (c : G)
     Nonempty ↑{x : decompQuot P g₁ × decompQuot P g₂ |
       ({(↑x.1.out : G) * (↑g₁ : G)} : Set G) *
         {(↑x.2.out : G) * (↑g₂ : G)} * P.H = {c} * (P.H : Set G)} := by
-  obtain ⟨h₁, hh₁, h₂, hh₂, hprod⟩ := (DoubleCoset.eq P.H P.H _ _).mp
+  obtain ⟨h₁, hh₁, h₂, hh₂, hprod⟩ := (DoubleCoset.eq (H := P.H) (K := P.H)).mp
     (DoubleCoset.mk_eq_of_doubleCoset_eq hset_eq)
   set α := (↑g₁ : G)
   set β := (↑g₂ : G)
@@ -549,7 +549,8 @@ scoped notation:max "T⦃" D ", " a "⦄" => T_single _ ℤ D a
 lemma mul_singleton_𝕋 (D1 D2 : HeckeCoset P) (a b : ℤ) :
     T_single P ℤ D1 a * T_single P ℤ D2 b =
       a • b • m P (HeckeCoset.rep D1) (HeckeCoset.rep D2) := by
-  simp_rw [T_single, mul_def]
+  rw [mul_def]
+  simp_rw [T_single]
   rw [Finsupp.sum_single_index, Finsupp.sum_single_index, m]
   · simp only [zero_smul, smul_zero]
   · ext a
@@ -602,6 +603,7 @@ lemma m_mul_one_eq_single (g₁ : P.Δ) :
       (Quotient.out_eq (⟦g₁⟧ : HeckeCoset P)).symm)
     (heckeMultiplicity_mul_one_eq_zero P g₁)
 
+set_option backward.isDefEq.respectTransparency.types false in
 /-- `T_single D b * T_single (HeckeCoset.one P) 1 = T_single D b`. -/
 lemma singleton_one_mul_𝕋 (D2 : HeckeCoset P) (b : ℤ) :
     T_single P ℤ D2 b * T_single P ℤ (HeckeCoset.one P) 1 =
@@ -639,6 +641,7 @@ lemma m_one_mul_eq_single (g₁ : P.Δ) :
       (Quotient.out_eq (⟦g₁⟧ : HeckeCoset P)).symm)
     (heckeMultiplicity_one_mul_eq_zero P g₁)
 
+set_option backward.isDefEq.respectTransparency.types false in
 /-- `T_single (HeckeCoset.one P) 1 * T_single D b = T_single D b`. -/
 lemma one_mul_singleton_𝕋 (D2 : HeckeCoset P) (b : ℤ) :
     T_single P ℤ (HeckeCoset.one P) 1 * T_single P ℤ D2 b =
@@ -673,7 +676,7 @@ noncomputable instance instNonUnitalNonAssocSemiring :
       simp only [mul_def]
       refine Eq.trans (Finsupp.sum_add_index ?_ ?_) ?_
       · intros
-        simp only [zero_smul, Finsupp.sum_fun_zero]
+        simp only [zero_smul, Finsupp.sum, Finset.sum_const_zero]
         rfl
       · intro D1 _ a b
         refine Finsupp.ext fun t ↦ ?_

@@ -106,10 +106,23 @@ section PolynomialRing
 
 variable [NeZero n] (p : ℕ) (hp : p.Prime)
 
+noncomputable def heckeIntCastHom (n : ℕ) [NeZero n] :
+    @RingHom ℤ (HeckeAlgebra n) Int.instCommSemiring.toNonAssocSemiring
+      (HeckeRing.GLn.instCommRing_HeckeAlgebra (n := n)).toCommSemiring.toNonAssocSemiring := {
+    toFun := fun z => (z : HeckeAlgebra n)
+    map_one' := Int.cast_one
+    map_mul' := fun a b => Int.cast_mul a b
+    map_zero' := Int.cast_zero
+    map_add' := fun a b => Int.cast_add a b
+  }
+
 /-- Evaluation homomorphism: `Xₖ ↦ T_gen k`.
     Maps `ℤ[X₁,...,Xₙ]` into the Hecke algebra. -/
 noncomputable def evalHom : MvPolynomial (Fin n) ℤ →+* HeckeAlgebra n :=
-  MvPolynomial.eval₂Hom (Int.castRingHom (HeckeAlgebra n)) (fun k ↦ T_gen n p k)
+  letI : Ring (HeckeAlgebra n) := (inferInstance : CommRing (HeckeAlgebra n)).toRing
+  letI : NonAssocSemiring (HeckeAlgebra n) :=
+    (inferInstance : CommRing (HeckeAlgebra n)).toCommSemiring.toNonAssocSemiring
+  MvPolynomial.eval₂Hom (heckeIntCastHom n) (fun k ↦ T_gen n p k)
 
 /-- `T(1,...,1)` is the multiplicative identity in the Hecke algebra, for any `n`. -/
 lemma T_elem_ones_eq_one : T_elem (fun _ : Fin n ↦ 1) = 1 := by
@@ -338,34 +351,42 @@ private lemma T_diag_one_ppow_inj (p : ℕ) (hp : p.Prime) {b s : Fin 1 →₀ �
 /-- n=1: evalHom is injective. Different monomials map to distinct basis elements,
     so the images are ℤ-linearly independent. -/
 theorem evalHom_injective_one (p : ℕ) (hp : p.Prime) : Function.Injective (evalHom 1 p) := by
+  letI : CommRing (HeckeAlgebra 1) := HeckeRing.GLn.instCommRing_HeckeAlgebra (n := 1)
+  letI : Ring (HeckeAlgebra 1) := (inferInstance : CommRing (HeckeAlgebra 1)).toRing
+  letI : NonAssocSemiring (HeckeAlgebra 1) :=
+    (inferInstance : CommRing (HeckeAlgebra 1)).toCommSemiring.toNonAssocSemiring
   intro P Q hPQ
   rw [← sub_eq_zero]
   set R := P - Q
-  have hR : evalHom 1 p R = 0 := by simp [R, map_sub, hPQ]
+  have hR : evalHom 1 p R = 0 := by
+    change evalHom 1 p (P - Q) = 0
+    rw [map_sub, hPQ]
+    exact sub_self _
   by_contra hne
   obtain ⟨s, hs⟩ := MvPolynomial.support_nonempty.mpr hne
   have hcoeff : R.coeff s ≠ 0 := MvPolynomial.mem_support_iff.mp hs
   set D := T_diag (n := 1) (fun _ ↦ p ^ (s 0))
   have h0 : (evalHom 1 p R).toFun D = 0 := by rw [hR]; rfl
   apply hcoeff
-  suffices h : ((evalHom 1 p) R).toFun D = MvPolynomial.coeff s R from h ▸ h0
-  show Finsupp.toFun (MvPolynomial.eval₂Hom (Int.castRingHom (HeckeAlgebra 1))
-    (fun k ↦ T_gen 1 p k) R) D = _
-  simp only [MvPolynomial.coe_eval₂Hom, MvPolynomial.eval₂_eq', Fin.prod_univ_one]
+  suffices h : ((evalHom 1 p) R).toFun D = R.coeff s from h ▸ h0
+  change MvPolynomial.eval₂ (heckeIntCastHom 1)
+    (fun k => T_gen 1 p k) R D = _
+  rw [MvPolynomial.eval₂_eq']
+  simp only [Fin.prod_univ_one]
   have h_sum_eq : (∑ x ∈ R.support,
-      (Int.castRingHom (HeckeAlgebra 1)) (MvPolynomial.coeff x R) * T_gen 1 p 0 ^ x 0) =
+      (Int.castRingHom (HeckeAlgebra 1)) (R.coeff x) * T_gen 1 p 0 ^ x 0) =
     (∑ x ∈ R.support,
       (Finsupp.single (T_diag (n := 1) (fun _ ↦ p ^ x 0))
-        (MvPolynomial.coeff x R) : HeckeCoset (GL_pair 1) →₀ ℤ)) :=
+        (R.coeff x) : HeckeCoset (GL_pair 1) →₀ ℤ)) :=
     Finset.sum_congr rfl (fun x _ ↦ by
       rw [T_gen_pow_one p hp]
       exact intCast_mul_T_elem_eq_single (fun _ ↦ p ^ x 0) (R.coeff x))
   show (∑ x ∈ R.support,
-      (Int.castRingHom (HeckeAlgebra 1)) (MvPolynomial.coeff x R) * T_gen 1 p 0 ^ x 0)
-        D = MvPolynomial.coeff s R
+      (Int.castRingHom (HeckeAlgebra 1)) (R.coeff x) * T_gen 1 p 0 ^ x 0)
+        D = R.coeff s
   rw [h_sum_eq]
   show (∑ x ∈ R.support, (Finsupp.single (T_diag (n := 1) (fun _ ↦ p ^ x 0))
-      (MvPolynomial.coeff x R) : HeckeCoset (GL_pair 1) →₀ ℤ)) D = MvPolynomial.coeff s R
+      (R.coeff x) : HeckeCoset (GL_pair 1) →₀ ℤ)) D = R.coeff s
   rw [Finsupp.finsetSum_apply]
   simp only [Finsupp.single_apply, D]
   rw [Finset.sum_eq_single s (fun b _ hbs ↦ if_neg (fun hb ↦ hbs
@@ -468,8 +489,9 @@ private lemma det_rep_T_gen_zero_pow_mul (q : {p : ℕ // p.Prime}) (a₀ b₀ :
             (HeckeCoset.rep (T_diag (![1, q.1]))) (HeckeCoset.rep D₂)) D' from by
           show (Finsupp.sum (Finsupp.single _ 1) (fun D₁' b₁ ↦ g'.sum (fun D₂ b₂ ↦
               b₁ • b₂ • HeckeRing.m (GL_pair 2) (HeckeCoset.rep D₁') (HeckeCoset.rep D₂)))) D' = _
-          rw [Finsupp.sum_single_index (by simp [Finsupp.sum]), Finsupp.sum]
-          simp only [one_smul, Finsupp.finsetSum_apply, Finsupp.smul_apply, smul_eq_mul]
+          rw [Finsupp.sum_single_index (by simp [Finsupp.sum])]
+          simp only [one_smul, Finsupp.sum_apply, Finsupp.sum,
+            Finsupp.finsetSum_apply, Finsupp.smul_apply, smul_eq_mul]
           rfl] at hD'
       exact hD')
     have hm_ne : (HeckeRing.m (GL_pair 2) (HeckeCoset.rep (T_diag (![1, q.1])))
@@ -782,7 +804,10 @@ lemma T_ad_one_p_pow_eval_leading (p : ℕ) (hp : p.Prime) (a : ℕ) :
           (T_diag (![1, p] : Fin 2 → ℕ)).rep D2.rep) D_target =
         g.sum (fun D2 b₂ ↦ (b₂ • HeckeRing.m (GL_pair 2)
           (T_diag (![1, p] : Fin 2 → ℕ)).rep D2.rep) D_target) from
-      Finsupp.sum_apply, Finsupp.sum]
+      Finsupp.sum_apply]
+    change (∑ D₂ ∈ g.support,
+      (g D₂ • HeckeRing.m (GL_pair 2)
+        (HeckeCoset.rep (T_diag (![1, p] : Fin 2 → ℕ))) (HeckeCoset.rep D₂)) D_target) = 1
     have h_leading_in_supp : D_leading ∈ g.support :=
       Finsupp.mem_support_iff.mpr (ih ▸ one_ne_zero)
     rw [← Finset.sum_erase_add _ _ h_leading_in_supp]
@@ -896,19 +921,33 @@ private lemma evalHom_apply_eq_sum_monomial (p : ℕ) (R : MvPolynomial (Fin 2) 
     (D : HeckeCoset (GL_pair 2)) :
     (evalHom 2 p R) D =
     ∑ d ∈ R.support, R.coeff d * (T_gen 2 p 0 ^ (d 0) * T_gen 2 p 1 ^ (d 1)) D := by
-  change (MvPolynomial.eval₂ (Int.castRingHom (HeckeAlgebra 2))
-    (fun k : Fin 2 ↦ T_gen 2 p k) R) D = _
+  letI : NonAssocSemiring ℤ := Int.instCommSemiring.toNonAssocSemiring
+  letI : CommRing (HeckeAlgebra 2) := HeckeRing.GLn.instCommRing_HeckeAlgebra (n := 2)
+  letI : Ring (HeckeAlgebra 2) := (inferInstance : CommRing (HeckeAlgebra 2)).toRing
+  letI : NonAssocSemiring (HeckeAlgebra 2) :=
+    (inferInstance : CommRing (HeckeAlgebra 2)).toCommSemiring.toNonAssocSemiring
+  change MvPolynomial.eval₂ (heckeIntCastHom 2)
+    (fun k => T_gen 2 p k) R D = _
   rw [MvPolynomial.eval₂_eq]
-  show (∑ d ∈ R.support, (Int.castRingHom (HeckeAlgebra 2)) (MvPolynomial.coeff d R) *
+  show (∑ d ∈ R.support, (heckeIntCastHom 2) (R.coeff d) *
     ∏ i ∈ d.support, T_gen 2 p i ^ d i) D = _
-  rw [show (∑ d ∈ R.support, (Int.castRingHom (HeckeAlgebra 2)) (MvPolynomial.coeff d R) *
+  rw [show (∑ d ∈ R.support, (heckeIntCastHom 2) (R.coeff d) *
         ∏ i ∈ d.support, T_gen 2 p i ^ d i) D =
-      ∑ d ∈ R.support, ((Int.castRingHom (HeckeAlgebra 2)) (MvPolynomial.coeff d R) *
+      ∑ d ∈ R.support, ((heckeIntCastHom 2) (R.coeff d) *
         ∏ i ∈ d.support, T_gen 2 p i ^ d i) D from Finset.sum_apply' _]
   refine Finset.sum_congr rfl (fun d _ ↦ ?_)
   show (((R.coeff d : ℤ) : HeckeAlgebra 2) * (∏ k ∈ d.support, T_gen 2 p k ^ d k)) D = _
+  have hsmul_mul : ∀ (z : ℤ) (x y : HeckeAlgebra 2),
+      (z • x) * y = z • (x * y) := by
+    intro z x y
+    calc
+      (z • x) * y = ((z : HeckeAlgebra 2) * x) * y := by
+        exact congrArg (fun t : HeckeAlgebra 2 => t * y) (zsmul_eq_mul x z)
+      _ = (z : HeckeAlgebra 2) * (x * y) := mul_assoc _ _ _
+      _ = z • (x * y) := by
+        exact (zsmul_eq_mul (x * y) z).symm
   rw [show ((R.coeff d : ℤ) : HeckeAlgebra 2) = (R.coeff d) • (1 : HeckeAlgebra 2) from
-    (zsmul_one _).symm, smul_mul_assoc, one_mul]
+    (zsmul_one _).symm, hsmul_mul, one_mul]
   rw [show ((R.coeff d) • (∏ k ∈ d.support, T_gen 2 p k ^ d k : HeckeAlgebra 2)) D =
     R.coeff d • (∏ k ∈ d.support, T_gen 2 p k ^ d k : HeckeAlgebra 2) D from
     Finsupp.smul_apply _ _ _, smul_eq_mul, prod_T_gen_pow_eq_two]

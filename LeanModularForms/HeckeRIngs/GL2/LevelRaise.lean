@@ -5,6 +5,7 @@ Authors: LeanModularForms contributors
 -/
 import LeanModularForms.HeckeRIngs.GL2.LevelEmbed
 import Mathlib.Analysis.Complex.Periodic
+import Mathlib.NumberTheory.ModularForms.NormTrace
 import Mathlib.NumberTheory.ModularForms.QExpansion
 
 /-!
@@ -141,10 +142,14 @@ lemma levelRaiseMatrix_mul_mapGL (d : ℕ) [NeZero d] (γ : SL(2, ℤ))
   have hdvd_real : ((d : ℕ) : ℝ) * (((γ.val 1 0 / (d : ℤ)) : ℤ) : ℝ) =
       ((γ.val 1 0 : ℤ) : ℝ) := by
     rw [mul_comm, ← Int.cast_natCast (R := ℝ), ← Int.cast_mul, Int.ediv_mul_cancel hdvd]
+  have mapGL_apply (A : SL(2, ℤ)) (i j : Fin 2) :
+      (mapGL ℝ A : GL (Fin 2) ℝ) i j = (A.val i j : ℝ) := by
+    simp [Matrix.SpecialLinearGroup.mapGL_coe_matrix]
   ext i j
-  simp only [Matrix.GeneralLinearGroup.coe_mul, Matrix.SpecialLinearGroup.mapGL_coe_matrix,
-    Matrix.mul_apply, Fin.sum_univ_two]
   fin_cases i <;> fin_cases j <;>
+    simp only [Units.val_mul, Matrix.mul_apply, Fin.sum_univ_two]
+  all_goals rw [mapGL_apply, mapGL_apply]
+  all_goals
     simp [levelRaiseMatrix, levelRaiseConjOfDvd, mul_comm, hdvd_real]
 
 /-- The conjugated matrix is in `Γ₁(M)` (Miyake Lemma 4.6.1, conjugation step).
@@ -507,12 +512,12 @@ lemma exists_T_levelRaiseConj_T_factor (l N : ℕ) [NeZero l] [NeZero N] (h_dvd 
   set j := shiftJ α β (l : ℤ)
   obtain ⟨k, hk⟩ := shiftJ_spec (β := β) (Int.isCoprime_iff_gcd_eq_one.mp
     (exists_shift_isCoprime a c l ⟨d, -b, by linear_combination hdet⟩))
-  refine ⟨i, j, ⟨!![α, k; (l : ℤ) * c, d - c * j], ?det⟩,
-    ?gamma0_mem, ?eq, ?diag⟩
-  · rw [Matrix.det_fin_two_of]
+  let γnew : SL(2, ℤ) := ⟨!![α, k; (l : ℤ) * c, d - c * j], by
+    rw [Matrix.det_fin_two_of]
     change α * (d - c * j) - k * ((l : ℤ) * c) = 1
-    linear_combination hdet + c * hk
-  · rw [Gamma0_mem]
+    linear_combination hdet + c * hk⟩
+  refine ⟨i, j, γnew, ?gamma0_mem, ?eq, ?diag⟩
+  · rw [Gamma0_mem (A := γnew)]
     change (((l : ℤ) * c : ℤ) : ZMod N) = 0
     rw [ZMod.intCast_zmod_eq_zero_iff_dvd]
     exact natCast_dvd_levelRaiseConj_lower_left h_dvd

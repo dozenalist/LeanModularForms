@@ -33,7 +33,10 @@ private abbrev FreeHecke := MvPolynomial GenIdx ℤ
 
 /-- The presentation map `π : ℤ[X_{(p,k)}] →+* HeckeAlgebra 2`. -/
 noncomputable def π_hom : FreeHecke →+* HeckeAlgebra 2 :=
-  MvPolynomial.eval₂Hom (Int.castRingHom _) (fun ⟨⟨p, _⟩, k⟩ ↦ T_gen 2 p k)
+  letI : Ring (HeckeAlgebra 2) := (inferInstance : CommRing (HeckeAlgebra 2)).toRing
+  letI : NonAssocSemiring (HeckeAlgebra 2) :=
+    (inferInstance : CommRing (HeckeAlgebra 2)).toCommSemiring.toNonAssocSemiring
+  MvPolynomial.eval₂Hom (heckeIntCastHom 2) (fun ⟨⟨p, _⟩, k⟩ ↦ T_gen 2 p k)
 
 /-- The p-local embedding `ℤ[X₀, X₁] ↪ ℤ[X_{(p,k)}]`. -/
 private noncomputable def embedPoly (p : ℕ) (hp : p.Prime) :
@@ -44,7 +47,19 @@ private noncomputable def embedPoly (p : ℕ) (hp : p.Prime) :
 private lemma π_comp_embed (p : ℕ) (hp : p.Prime) :
     π_hom.comp (embedPoly p hp) = evalHom 2 p := by
   apply MvPolynomial.ringHom_ext
-  · intro r; simp [π_hom, embedPoly, evalHom]
+  · intro r
+    simp [π_hom, embedPoly, evalHom]
+    have hright :
+        (MvPolynomial.eval₂Hom (heckeIntCastHom 2)
+          (fun k : Fin 2 ↦ T_gen 2 p k)) (↑r : MvPolynomial (Fin 2) ℤ) =
+          heckeIntCastHom 2 r := by
+      change (MvPolynomial.eval₂Hom (heckeIntCastHom 2)
+        (fun k : Fin 2 ↦ T_gen 2 p k)) (MvPolynomial.C r) = _
+      exact MvPolynomial.eval₂Hom_C _ _ _
+    have hcast : T_single (GL_pair 2) ℤ (HeckeCoset.one (GL_pair 2)) r =
+        heckeIntCastHom 2 r := by
+      simpa [heckeIntCastHom] using (HeckeRing.intCast_eq (GL_pair 2) r).symm
+    exact hcast.trans hright.symm
   · intro i
     show π_hom (embedPoly p hp (MvPolynomial.X i)) = evalHom 2 p (MvPolynomial.X i)
     have h1 : embedPoly p hp (MvPolynomial.X i) =
@@ -76,7 +91,7 @@ private lemma ppow_mem_π_range (p : ℕ) (hp : p.Prime)
 private lemma prod_removePrime_lt (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a i)
     (p : ℕ) (hp : p.Prime) (hp_dvd : p ∣ ∏ i, a i) :
     ∏ i, removePrime 2 p a i < ∏ i, a i := by
-  refine Finset.prod_lt_prod (fun i _ ↦ removePrime_pos 2 p a ha i)
+  refine Finset.prod_lt_prod₀ (fun i _ ↦ removePrime_pos 2 p a ha i)
     (fun i _ ↦ Nat.le_of_dvd (ha i) (Nat.ordCompl_dvd (a i) p)) ?_
   simp only [Fin.prod_univ_two] at hp_dvd
   have strict (i : Fin 2) (hi : p ∣ a i) : removePrime 2 p a i < a i := by

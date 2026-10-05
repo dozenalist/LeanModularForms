@@ -623,17 +623,17 @@ private lemma π_injective : Function.Injective π_hom := by
   set D_s := T_diag (∏ p ∈ primesOf s, ppowDiag 2 p.1
     ![toPrimeExp s p 1, toPrimeExp s p 0 + toPrimeExp s p 1]) with hD_s
   have h_zero : (π_hom P) D_s = 0 := by rw [hP]; rfl
-  change (MvPolynomial.eval₂ (Int.castRingHom (HeckeAlgebra 2))
+  change (MvPolynomial.eval₂ (heckeIntCastHom 2)
     (fun i : GenIdx ↦ T_gen 2 i.1.1 i.2) P) D_s = 0 at h_zero
   rw [MvPolynomial.eval₂_eq] at h_zero
-  change (∑ d ∈ MvPolynomial.support P, (Int.castRingHom (HeckeAlgebra 2)) (MvPolynomial.coeff d P) *
+  change (∑ d ∈ MvPolynomial.support P, (heckeIntCastHom 2) (P.coeff d) *
     ∏ i ∈ d.support, T_gen 2 (↑i.1) i.2 ^ d i) D_s = 0 at h_zero
-  rw [show (∑ d ∈ MvPolynomial.support P, (Int.castRingHom (HeckeAlgebra 2)) (MvPolynomial.coeff d P) *
+  rw [show (∑ d ∈ MvPolynomial.support P, (heckeIntCastHom 2) (P.coeff d) *
         ∏ i ∈ d.support, T_gen 2 (↑i.1) i.2 ^ d i) D_s =
-      ∑ d ∈ MvPolynomial.support P, ((Int.castRingHom (HeckeAlgebra 2)) (MvPolynomial.coeff d P) *
+      ∑ d ∈ MvPolynomial.support P, ((heckeIntCastHom 2) (P.coeff d) *
         ∏ i ∈ d.support, T_gen 2 (↑i.1) i.2 ^ d i) D_s from Finset.sum_apply' _] at h_zero
   have h_term : ∀ d ∈ P.support,
-      (((Int.castRingHom (HeckeAlgebra 2)) (P.coeff d)) *
+      (((heckeIntCastHom 2) (P.coeff d)) *
         (∏ i ∈ d.support, T_gen 2 i.1.1 i.2 ^ d i)) D_s =
       P.coeff d * (∏ i ∈ d.support, T_gen 2 i.1.1 i.2 ^ d i) D_s := by
     intro d _

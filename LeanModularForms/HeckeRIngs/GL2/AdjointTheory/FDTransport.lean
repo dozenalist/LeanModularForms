@@ -1367,10 +1367,14 @@ private lemma mem_Gamma_p_α_T_p_lower_mpr
   rw [Matrix.GeneralLinearGroup.coe_mul, Matrix.GeneralLinearGroup.coe_mul,
     conj_T_p_lower_real_val p hp γ]
   ext i j
-  fin_cases i <;> fin_cases j <;>
-    simp [hy_def, Matrix.SpecialLinearGroup.map_apply_coe, RingHom.mapMatrix_apply,
-      Matrix.map_apply, hk] <;>
-    field_simp
+  change (Int.castRingHom ℝ) (y.val i j) =
+    (!![((γ.val 0 0 : ℤ) : ℝ), (p : ℝ) * ((γ.val 0 1 : ℤ) : ℝ);
+      ((γ.val 1 0 : ℤ) : ℝ) / (p : ℝ), ((γ.val 1 1 : ℤ) : ℝ)] i j)
+  fin_cases i <;> fin_cases j
+  all_goals try rw [← hy_def]
+  all_goals
+    simp [hy_def, Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one,
+      Matrix.empty_val', Matrix.cons_val_fin_one, hk] <;> try field_simp <;> ring
 
 open CongruenceSubgroup Pointwise ConjAct in
 /-- **Membership characterization of `Γ_p(T_p_lower)`.** For `A = diag(p,1)`, conjugation
@@ -1438,8 +1442,8 @@ theorem exists_Gamma1_mul_inv_mem_Gamma0 (p : ℕ) (hp : Nat.Prime p) (hpN : Nat
           (g.1 1 0) * (((Gamma1_S_corrector N p hpN)⁻¹).1 0 0) +
           (g.1 1 1) * (((Gamma1_S_corrector N p hpN)⁻¹).1 1 0)
         from by rw [Matrix.SpecialLinearGroup.coe_mul, Matrix.mul_apply, Fin.sum_univ_two]]
-      simp only [Gamma1_S_corrector, Matrix.SpecialLinearGroup.coe_inv,
-        Matrix.adjugate_fin_two_of,
+      rw [Matrix.SpecialLinearGroup.coe_inv]
+      simp [Gamma1_S_corrector, Matrix.adjugate_fin_two_of,
         Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one,
         Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply]
       ring
@@ -1460,7 +1464,8 @@ theorem exists_Gamma1_mul_inv_mem_Gamma0 (p : ℕ) (hp : Nat.Prime p) (hpN : Nat
             (g.1 1 0) * (((lowerUni (m : ℤ))⁻¹).1 0 0) +
             (g.1 1 1) * (((lowerUni (m : ℤ))⁻¹).1 1 0)
           from by rw [Matrix.SpecialLinearGroup.coe_mul, Matrix.mul_apply, Fin.sum_univ_two]]
-        simp only [lowerUni, Matrix.SpecialLinearGroup.coe_inv, Matrix.adjugate_fin_two_of,
+        rw [Matrix.SpecialLinearGroup.coe_inv]
+        simp [lowerUni, Matrix.adjugate_fin_two_of,
           Matrix.cons_val', Matrix.cons_val_zero,
           Matrix.cons_val_one, Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply]
         ring
@@ -1638,11 +1643,10 @@ theorem exists_Gamma1_mul_inv_mem_Gamma_up (p : ℕ) (hp : Nat.Prime p) (hpN : N
           (g.1 0 0) * (((Gamma1_S_corrector_up N p hpN)⁻¹).1 0 1) +
           (g.1 0 1) * (((Gamma1_S_corrector_up N p hpN)⁻¹).1 1 1)
         from by rw [Matrix.SpecialLinearGroup.coe_mul, Matrix.mul_apply, Fin.sum_univ_two]]
-      simp only [Gamma1_S_corrector_up, Matrix.SpecialLinearGroup.coe_inv,
-        Matrix.adjugate_fin_two_of,
+      rw [Matrix.SpecialLinearGroup.coe_inv]
+      simp [Gamma1_S_corrector_up, Matrix.adjugate_fin_two_of,
         Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one,
         Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply]
-      ring
     rw [h01]; push_cast
     rw [show ((g.1 0 1 : ℤ) : ZMod p) * ((aInvOfCoprime N p hpN : ZMod p) * (p : ZMod p)) = 0 by
       rw [ZMod.natCast_self, mul_zero, mul_zero], add_zero, mul_one, ha]

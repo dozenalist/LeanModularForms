@@ -438,12 +438,14 @@ private theorem orbit_upper_gamma0 [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.Prim
     rw [hσ, zero_mul, sub_zero]
   have hmatrix : T_p_upper p hp.pos b.val * mapGL ℚ σ = mapGL ℚ τ * T_p_upper p hp.pos j' := by
     apply Units.ext
+    change (T_p_upper p hp.pos b.val).val * (σ.val.map (Int.cast : ℤ → ℚ)) =
+      (τ.val.map (Int.cast : ℤ → ℚ)) * (T_p_upper p hp.pos j').val
     ext i j
     fin_cases i <;> fin_cases j <;>
       simp only [GeneralLinearGroup.coe_mul, mul_apply, T_p_upper_coe, Fin.isValue,
-        Matrix.SpecialLinearGroup.mapGL_coe_matrix, Fin.sum_univ_two, algebraMap_int_eq,
+        Matrix.SpecialLinearGroup.mapGL_coe_matrix, map_apply_coe, RingHom.mapMatrix_apply, Matrix.map_apply, Fin.sum_univ_two, algebraMap_int_eq,
         hτ_def, hτ_mat_def] <;>
-      norm_num [mapGL_coe_matrix, RingHom.mapMatrix_apply, map_apply, Matrix.cons_val_zero,
+      norm_num [Matrix.SpecialLinearGroup.mapGL_coe_matrix, RingHom.mapMatrix_apply, map_apply, Matrix.cons_val_zero,
         Matrix.cons_val_one, Matrix.head_cons, Matrix.head_fin_const] <;>
       simp only [show (↑σ : Matrix (Fin 2) (Fin 2) ℤ) = M from rfl] <;>
       first | rfl | simp |
@@ -490,13 +492,15 @@ private theorem orbit_upper_div_gamma0 [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.
   have hmatrix : T_p_upper p hp.pos b.val * mapGL ℚ σ =
       mapGL ℚ τ * T_p_lower p hp.pos := by
     apply Units.ext
+    change (T_p_upper p hp.pos b.val).val * (σ.val.map (Int.cast : ℤ → ℚ)) =
+      (τ.val.map (Int.cast : ℤ → ℚ)) * (T_p_lower p hp.pos).val
     ext i j
     fin_cases i <;> fin_cases j <;>
       simp only [GeneralLinearGroup.coe_mul, mul_apply, T_p_upper_coe, T_p_lower_coe, Fin.isValue,
-        Matrix.SpecialLinearGroup.mapGL_coe_matrix, Fin.sum_univ_two,
+        Matrix.SpecialLinearGroup.mapGL_coe_matrix, map_apply_coe, RingHom.mapMatrix_apply, Matrix.map_apply, Fin.sum_univ_two,
         algebraMap_int_eq, hτ_def, hτ_mat_def,
         hB_def] <;>
-      norm_num [mapGL_coe_matrix, RingHom.mapMatrix_apply, map_apply,
+      norm_num [Matrix.SpecialLinearGroup.mapGL_coe_matrix, RingHom.mapMatrix_apply, map_apply,
         Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.head_cons,
         Matrix.head_fin_const] <;>
       simp only [show (↑σ : Matrix (Fin 2) (Fin 2) ℤ) = M from rfl] <;>
@@ -553,12 +557,14 @@ private theorem orbit_lower_gamma0 [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.Prim
   have hmatrix : T_p_lower p hp.pos * mapGL ℚ σ =
       mapGL ℚ τ * T_p_upper p hp.pos j' := by
     apply Units.ext
+    change (T_p_lower p hp.pos).val * (σ.val.map (Int.cast : ℤ → ℚ)) =
+      (τ.val.map (Int.cast : ℤ → ℚ)) * (T_p_upper p hp.pos j').val
     ext i j
     fin_cases i <;> fin_cases j <;>
       simp only [GeneralLinearGroup.coe_mul, mul_apply, T_p_lower_coe, T_p_upper_coe, Fin.isValue,
-        Matrix.SpecialLinearGroup.mapGL_coe_matrix, Fin.sum_univ_two,
+        Matrix.SpecialLinearGroup.mapGL_coe_matrix, map_apply_coe, RingHom.mapMatrix_apply, Matrix.map_apply, Fin.sum_univ_two,
         algebraMap_int_eq, hτ_def, hτ_mat_def] <;>
-      norm_num [mapGL_coe_matrix, RingHom.mapMatrix_apply, map_apply,
+      norm_num [Matrix.SpecialLinearGroup.mapGL_coe_matrix, RingHom.mapMatrix_apply, map_apply,
         Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.head_cons,
         Matrix.head_fin_const] <;>
       simp only [show (↑σ : Matrix (Fin 2) (Fin 2) ℤ) = M from rfl] <;>
@@ -601,12 +607,14 @@ private theorem orbit_lower_div_gamma0 [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.
   have hmatrix : T_p_lower p hp.pos * mapGL ℚ σ =
       mapGL ℚ τ * T_p_lower p hp.pos := by
     apply Units.ext
+    change (T_p_lower p hp.pos).val * (σ.val.map (Int.cast : ℤ → ℚ)) =
+      (τ.val.map (Int.cast : ℤ → ℚ)) * (T_p_lower p hp.pos).val
     ext i j
     fin_cases i <;> fin_cases j <;>
       simp only [GeneralLinearGroup.coe_mul, mul_apply, T_p_lower_coe, Fin.isValue,
-        Matrix.SpecialLinearGroup.mapGL_coe_matrix, Fin.sum_univ_two,
+        Matrix.SpecialLinearGroup.mapGL_coe_matrix, map_apply_coe, RingHom.mapMatrix_apply, Matrix.map_apply, Fin.sum_univ_two,
         algebraMap_int_eq, hτ_def, hτ_mat_def] <;>
-      norm_num [mapGL_coe_matrix, RingHom.mapMatrix_apply, map_apply,
+      norm_num [Matrix.SpecialLinearGroup.mapGL_coe_matrix, RingHom.mapMatrix_apply, map_apply,
         Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.head_cons,
         Matrix.head_fin_const] <;>
       simp only [show (↑σ : Matrix (Fin 2) (Fin 2) ℤ) = M from rfl] <;>

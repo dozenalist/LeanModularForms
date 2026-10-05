@@ -320,7 +320,8 @@ private lemma continuousAt_g_at_pole
       ∑ s ∈ S0.filter (· ≠ z), residueSimplePole f s / (w - s) := fun w => by
     rw [show S0.filter (· ≠ z) = S0.erase z from Finset.filter_ne' _ _,
       ← Finset.add_sum_erase _ _ hs]; ring
-  exact (funext hg_eq_at ▸ hf_ext.sub h2 : _)
+  convert hf_ext.sub h2 using 1
+  exact funext hg_eq_at
 
 private lemma diff_punctured_of_diff_off_poles
     (U : Set ℂ) (hU : IsOpen U) (S0 : Finset ℂ)

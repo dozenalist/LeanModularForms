@@ -16,7 +16,7 @@ import Mathlib.Data.Int.GCD
 import Mathlib.Data.Int.ModEq
 import Mathlib.Data.Nat.ChineseRemainder
 import Mathlib.Data.Nat.Factorization.Basic
-import Mathlib.Logic.Denumerable
+import Mathlib.Basic.Denumerable
 import Mathlib.Data.Rat.Encodable
 import Mathlib.RingTheory.AlgebraicIndependent.Defs
 import Mathlib.RingTheory.Ideal.Maps
@@ -93,13 +93,9 @@ lemma Delta0_le_posDetInt (N : ℕ) :
 private lemma Gamma0_map_commensurable_SLnZ (N : ℕ) [NeZero N] :
     Subgroup.Commensurable ((CongruenceSubgroup.Gamma0 N).map (mapGL ℚ))
       (Subgroup.map (mapGL ℚ : SpecialLinearGroup (Fin 2) ℤ →* GL (Fin 2) ℚ) ⊤) := by
-  constructor
-  · rw [Subgroup.relIndex_map_map_of_injective _ _ mapGL_injective,
-        Subgroup.relIndex_top_right]
-    exact Subgroup.FiniteIndex.index_ne_zero
-  · rw [Subgroup.relIndex_map_map_of_injective _ _ mapGL_injective,
-        Subgroup.relIndex_top_left]
-    exact one_ne_zero
+  exact Subgroup.Commensurable.map (mapGL ℚ) <| by
+    rw [Subgroup.Commensurable.top_right_iff]
+    infer_instance
 
 /-- `Δ₀(N) ≤ commensurator(Γ₀(N))`. Follows from Shimura Lemma 3.10. -/
 lemma Delta0_le_commensurator (N : ℕ) [NeZero N] :

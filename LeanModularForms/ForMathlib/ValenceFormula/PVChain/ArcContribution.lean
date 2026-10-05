@@ -41,7 +41,7 @@ private lemma deriv_fdBoundary_H_arc (H : ℝ) {t : ℝ} (h1 : 1 < t) (h3 : t < 
   rw [fdBoundary_H_eq_arc h1 h3]
   erw [(fdBoundary_H_hasDerivAt_arc H h1 h3).deriv]
   push_cast
-  ring
+  ring_nf
 
 omit hf in
 lemma logDeriv_modform_S_transform (z : ℂ) (hz : 0 < z.im) (hz_ne : z ≠ 0)
@@ -140,10 +140,15 @@ private lemma cpv_integrand_intervalIntegrable_arc (S : Finset UpperHalfPlane)
   have hK'_compact : IsCompact K' := by
     refine IsCompact.of_isClosed_subset isCompact_Icc ?_ (fun _t ⟨ht, _⟩ => ht)
     refine IsClosed.inter isClosed_Icc ?_
-    convert (isClosed_iInter fun s => isClosed_iInter fun _ =>
+    have hset : {t : ℝ | ∀ s ∈ S_arc, ε ≤ ‖γ t - (s : ℂ)‖} =
+        ⋂ (s : ℂ) (_ : s ∈ S_arc), {t : ℝ | ε ≤ ‖γ t - s‖} := by
+      ext t
+      simp only [Set.mem_setOf_eq, Set.mem_iInter]
+    change IsClosed ({t : ℝ | ∀ s ∈ S_arc, ε ≤ ‖γ t - (s : ℂ)‖} : Set ℝ)
+    rw [hset]
+    exact (isClosed_iInter fun s => isClosed_iInter fun _ =>
       isClosed_le (f := fun _ => ε) (g := fun t => ‖γ t - s‖) continuous_const (by fun_prop)
-      : IsClosed (⋂ (s : ℂ) (_ : s ∈ S_arc), {t : ℝ | ε ≤ ‖γ t - s‖})) using 1
-    ext t; simp only [Set.mem_iInter, Set.mem_setOf]; exact Iff.rfl
+      : IsClosed (⋂ (s : ℂ) (_ : s ∈ S_arc), {t : ℝ | ε ≤ ‖γ t - s‖}))
   set K := {t ∈ Set.uIoc (1:ℝ) 3 | ¬∃ s ∈ (↑S_arc : Set ℂ), ‖γ t - s‖ ≤ ε}
   have hK_subset_K' : K ⊆ K' := fun t ⟨ht_uioc, h_not_near⟩ => by
     have ht_Ioc : t ∈ Set.Ioc 1 3 := by rwa [Set.uIoc_of_le (by norm_num)] at ht_uioc
@@ -187,10 +192,19 @@ private lemma cpv_integrand_intervalIntegrable_arc (S : Finset UpperHalfPlane)
     apply measurableSet_uIoc.inter
     apply MeasurableSet.compl
     suffices h : IsClosed (⋃ s ∈ (↑S_arc : Set ℂ), {t : ℝ | ‖γ t - s‖ ≤ ε}) by
-      convert h.measurableSet using 1
-      ext t
-      simp only [Set.mem_iUnion, Set.mem_setOf, Finset.mem_coe, exists_prop]
-      exact Iff.rfl
+      have hset : (⋃ (s : ℂ) (_ : s ∈ (↑S_arc : Set ℂ)),
+          {t : ℝ | ‖γ t - s‖ ≤ ε}) =
+          {t : ℝ | ∃ s ∈ (↑S_arc : Set ℂ), ‖γ t - s‖ ≤ ε} := by
+        ext t
+        simp only [Set.mem_iUnion, Set.mem_setOf_eq]
+        constructor
+        · rintro ⟨s, hs, hdist⟩
+          exact ⟨s, hs, hdist⟩
+        · rintro ⟨s, hs, hdist⟩
+          exact ⟨s, hs, hdist⟩
+      change MeasurableSet ({t : ℝ | ∃ s ∈ (↑S_arc : Set ℂ), ‖γ t - s‖ ≤ ε} : Set ℝ)
+      rw [← hset]
+      exact h.measurableSet
     exact S_arc.finite_toSet.isClosed_biUnion fun s _ =>
       isClosed_le (by fun_prop) continuous_const
   have hF_K : EqOn F (fun t => logDeriv g (γ t) * deriv γ t) K := by

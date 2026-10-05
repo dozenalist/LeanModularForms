@@ -7,6 +7,8 @@ import LeanModularForms.HeckeRIngs.GL2.HeckeT_p
 import LeanModularForms.HeckeRIngs.GL2.HeckeT_p_GLpair
 import LeanModularForms.HeckeRIngs.GL2.HeckeModularForm_Gamma0
 
+set_option backward.isDefEq.respectTransparency.types true
+
 /-!
 # The Hecke double coset `D_p` in `𝕋(Γ₀(N))`
 
@@ -82,12 +84,34 @@ private lemma T_p_lower_factor_through_diag_1p (N : ℕ) [NeZero N] (p : ℕ) (h
   obtain ⟨u, v, h_bezout⟩ := hpN.isCoprime
   set σ : SL(2, ℤ) := ⟨!![(p : ℤ), -v; (N : ℤ), u], by grind [det_fin_two_of]⟩
   set τ : SL(2, ℤ) := ⟨!![u * p, v; -(N : ℤ), 1], by grind [det_fin_two_of]⟩
-  refine ⟨mapGL ℚ σ, Subgroup.mem_map_of_mem _ (by simp [Gamma0_mem, σ]),
-    mapGL ℚ τ, Subgroup.mem_map_of_mem _ (by simp [Gamma0_mem, τ]), ?_⟩
+  have hσ : σ ∈ Gamma0 N := by
+    rw [Gamma0_mem]
+    change ((σ.val 1 0 : ℤ) : ZMod N) = 0
+    simp [σ, Matrix.cons_val_one, Matrix.head_cons]
+  have hτ : τ ∈ Gamma0 N := by
+    rw [Gamma0_mem]
+    change ((τ.val 1 0 : ℤ) : ZMod N) = 0
+    simp [τ, Matrix.cons_val_one, Matrix.head_cons]
+  refine ⟨mapGL ℚ σ, Subgroup.mem_map_of_mem _ hσ,
+    mapGL ℚ τ, Subgroup.mem_map_of_mem _ hτ, ?_⟩
   have h_bezout_Q : (u : ℚ) * p + (v : ℚ) * N = 1 := by exact_mod_cast h_bezout
+  have hσ_val : ∀ i j, ((mapGL ℚ σ).val i j : ℚ) = ((σ.val i j : ℤ) : ℚ) := by
+    intro i j
+    simp only [mapGL_coe_matrix, SpecialLinearGroup.map_apply_coe,
+      RingHom.mapMatrix_apply, Matrix.map_apply, algebraMap_int_eq, Int.coe_castRingHom]
+  have hτ_val : ∀ i j, ((mapGL ℚ τ).val i j : ℚ) = ((τ.val i j : ℤ) : ℚ) := by
+    intro i j
+    simp only [mapGL_coe_matrix, SpecialLinearGroup.map_apply_coe,
+      RingHom.mapMatrix_apply, Matrix.map_apply, algebraMap_int_eq, Int.coe_castRingHom]
+  have hdiag_pos : ∀ i : Fin 2, 0 < (![1, p] : Fin 2 → ℕ) i := by
+    intro i
+    fin_cases i <;> simp [hp.pos]
+  have hdiag := diagMat_val 2 (![1, p] : Fin 2 → ℕ) hdiag_pos
   ext i j
+  simp only [GeneralLinearGroup.coe_mul, hσ_val, hτ_val, Matrix.mul_apply,
+    Fin.sum_univ_two]
   fin_cases i <;> fin_cases j <;>
-    simp [σ, τ, Matrix.mul_apply, Fin.sum_univ_two, Fin.forall_fin_two, hp.pos] <;> grind
+    simp [σ, τ, hdiag, Matrix.diagonal] <;> nlinarith [h_bezout_Q]
 
 /-- Membership of `T_p_upper(b)` in the Γ₀(N)-double coset `D_p_Gamma0`, via the
 factorization `T_p_upper(b) = diag(1,p) · σ_b` with `σ_b = [[1,b],[0,1]] ∈ Γ₀(N)`. -/
@@ -95,11 +119,23 @@ lemma T_p_upper_mem_D_p_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp : Nat.Prime p)
     (T_p_upper p hp.pos b : GL (Fin 2) ℚ) ∈
       HeckeRing.HeckeCoset.toSet (D_p_Gamma0 N p hp.pos) := by
   set σ_b : SL(2, ℤ) := ⟨!![1, (b : ℤ); 0, 1], by simp [det_fin_two]⟩
+  have hσ_b : σ_b ∈ Gamma0 N := by
+    rw [Gamma0_mem]
+    change ((σ_b.val 1 0 : ℤ) : ZMod N) = 0
+    simp [σ_b, Matrix.cons_val_one, Matrix.head_cons]
+  have hσ_b_val : ∀ i j, ((mapGL ℚ σ_b).val i j : ℚ) = ((σ_b.val i j : ℤ) : ℚ) := by
+    intro i j
+    simp only [mapGL_coe_matrix, SpecialLinearGroup.map_apply_coe,
+      RingHom.mapMatrix_apply, Matrix.map_apply, algebraMap_int_eq, Int.coe_castRingHom]
+  have hdiag_pos : ∀ i : Fin 2, 0 < (![1, p] : Fin 2 → ℕ) i := by
+    intro i
+    fin_cases i <;> simp [hp.pos]
+  have hdiag := diagMat_val 2 (![1, p] : Fin 2 → ℕ) hdiag_pos
   refine mem_D_p_Gamma0_of_factor_through_diag N p hp.pos _ 1 (mapGL ℚ σ_b) (one_mem _)
-    (Subgroup.mem_map_of_mem _ (by simp [Gamma0_mem, σ_b])) ?_
+    (Subgroup.mem_map_of_mem _ hσ_b) ?_
   ext i j
-  fin_cases i <;> fin_cases j <;>
-    simp [σ_b, Matrix.mul_apply, Fin.sum_univ_two, Fin.forall_fin_two, hp.pos]
+  simp only [GeneralLinearGroup.coe_mul, hσ_b_val, Matrix.mul_apply, Fin.sum_univ_two]
+  fin_cases i <;> fin_cases j <;> simp [σ_b, hdiag, Matrix.diagonal]
 
 /-- Membership of `T_p_lower` in the Γ₀(N)-double coset `D_p_Gamma0`, via the Bezout
 factorization `T_p_lower = σ · diag(1,p) · τ` with `σ, τ ∈ Γ₀(N)`. -/

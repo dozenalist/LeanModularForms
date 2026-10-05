@@ -245,13 +245,14 @@ private lemma fin2_col_scale (m : ℕ) (j : Fin 2) :
 
 noncomputable def lunip_inject (N : ℕ) [NeZero N] (k_exp : ℕ)
     (g : (Gamma0_pair N).Δ) : Fin k_exp → HeckeRing.decompQuot (Gamma0_pair N) g :=
-  fun r ↦ ⟦⟨mapGL ℚ ⟨Matrix.of ![![(1 : ℤ), 0], ![↑N * (↑r : ℤ), 1]],
-    by simp [Matrix.det_fin_two, Matrix.of_apply, Matrix.cons_val_zero,
-      Matrix.cons_val_one]⟩,
-    Subgroup.mem_map_of_mem _ (by
+  fun r ↦ by
+    let γ : SpecialLinearGroup (Fin 2) ℤ := ⟨Matrix.of ![![(1 : ℤ), 0], ![↑N * (↑r : ℤ), 1]],
+      by simp [Matrix.det_fin_two, Matrix.of_apply, Matrix.cons_val_zero,
+        Matrix.cons_val_one]⟩
+    have hγ : γ ∈ CongruenceSubgroup.Gamma0 N := by
       rw [CongruenceSubgroup.Gamma0_mem]
-      simp [Matrix.of_apply, Matrix.cons_val_one])⟩⟧
-
+      simp [γ, Matrix.of_apply, Matrix.cons_val_one]
+    exact Quotient.mk'' (⟨mapGL ℚ γ, Subgroup.mem_map_of_mem _ hγ⟩ : (Gamma0_pair N).H)
 private lemma coprime_of_gcd_one_dvd_pow (a : ℤ) (N : ℕ) (k : ℕ) (hk : ℕ)
     (haN : Int.gcd a N = 1) (hk_dvd : k ∣ N ^ hk) : Int.gcd a k = 1 :=
   Nat.Coprime.coprime_dvd_right hk_dvd (Nat.Coprime.pow_right hk haN)
@@ -290,9 +291,20 @@ lemma shimura_prop_3_33_gen (N : ℕ) [NeZero N]
   have hR_Gamma0 : R_sl ∈ CongruenceSubgroup.Gamma0 N := by
     rw [CongruenceSubgroup.Gamma0_mem]
     simp [R_sl, R, Matrix.of_apply, Matrix.cons_val_one]
+  have hLmap : (mapGL ℚ L_sl : GL (Fin 2) ℚ).val =
+      L.map (Int.cast : ℤ → ℚ) := by
+    change L.map (Int.cast : ℤ → ℚ) = L.map (Int.cast : ℤ → ℚ)
+    rfl
+  have hRmap : (mapGL ℚ R_sl : GL (Fin 2) ℚ).val =
+      R.map (Int.cast : ℤ → ℚ) := by
+    change R.map (Int.cast : ℤ → ℚ) = R.map (Int.cast : ℤ → ℚ)
+    rfl
   refine ⟨mapGL ℚ L_sl, Subgroup.mem_map_of_mem _ hL_Gamma0,
     mapGL ℚ R_sl, Subgroup.mem_map_of_mem _ hR_Gamma0, ?_⟩
-  apply Units.ext; ext i j
+  apply Units.ext
+  simp only [Units.val_mul]
+  rw [hA, hLmap, hRmap]
+  ext i j
   have hA_ij := congr_fun₂ hA_eq i j
   simp only [Matrix.mul_apply, Fin.sum_univ_two, Matrix.of_apply, Fin.isValue,
     Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one,
@@ -304,7 +316,8 @@ lemma shimura_prop_3_33_gen (N : ℕ) [NeZero N]
   have hd01 : (D : GL (Fin 2) ℚ).val 0 1 = 0 := by rw [hDv]; simp [Matrix.diagonal]
   have hd10 : (D : GL (Fin 2) ℚ).val 1 0 = 0 := by rw [hDv]; simp [Matrix.diagonal]
   have hd11 : (D : GL (Fin 2) ℚ).val 1 1 = ↑m := by rw [hDv]; simp [Matrix.diagonal]
-  simp only [GeneralLinearGroup.coe_mul, mapGL_coe_matrix, RingHom.mapMatrix_apply,
+  simp only [GeneralLinearGroup.coe_mul, SpecialLinearGroup.map_apply_coe,
+    RingHom.mapMatrix_apply,
     algebraMap_int_eq, Int.coe_castRingHom, hA, Matrix.mul_apply, Fin.sum_univ_two,
     Matrix.map_apply, SpecialLinearGroup.map, MonoidHom.coe_mk, OneHom.coe_mk,
     L_sl, R_sl, SpecialLinearGroup.coe_mk, R, Matrix.of_apply, Fin.isValue,
@@ -313,7 +326,9 @@ lemma shimura_prop_3_33_gen (N : ℕ) [NeZero N]
   fin_cases i <;> fin_cases j <;> (
     simp only [Fin.isValue, mul_zero, mul_one, add_zero, zero_add] at hA_ij ⊢
     simp only [fin2_col_scale] at hA_ij
-    norm_cast; linarith [hA_ij])
+    simp [Matrix.cons_val_zero, Matrix.cons_val_one] at hA_ij
+    norm_cast
+    simpa [Fin.isValue, Matrix.cons_val_zero, Matrix.cons_val_one] using hA_ij)
 
 /-- **Shimura Proposition 3.33** (double coset form): Every element of `Δ₀(N)` with
 determinant `m` (where `m ∣ N^k`) is in the `Γ₀(N)`-double coset of `[[1,0],[0,m]]`. -/
@@ -364,10 +379,23 @@ private lemma lunip_conj_diag_eq (N : ℕ) [NeZero N] (k_exp : ℕ)
           ![(N : ℤ) * c'', τ'.1 0 0]], hW⟩ =
       (mapGL ℚ τ')⁻¹ * mapGL ℚ ⟨!![1, 0; (N : ℤ) * ↑r_int.toNat, 1], hU⟩ *
         ↑(diagMat 2 (![1, k_exp] : Fin 2 → ℕ)) := by
-  rw [show ((mapGL ℚ τ')⁻¹ : GL (Fin 2) ℚ) = mapGL ℚ τ'⁻¹ from (map_inv (mapGL ℚ) τ').symm,
-    ← map_mul]
-  apply Units.ext; ext i j
-  simp only [diagMat_val 2 _ ha, mapGL_coe_matrix, GeneralLinearGroup.coe_mul,
+  let τsl : SpecialLinearGroup (Fin 2) ℤ := τ'
+  have hmapInv : ((mapGL ℚ τsl)⁻¹ : GL (Fin 2) ℚ) = mapGL ℚ τsl⁻¹ := by
+    exact ((mapGL ℚ : SpecialLinearGroup (Fin 2) ℤ →* GL (Fin 2) ℚ).map_inv τsl).symm
+  rw [show ((mapGL ℚ τ')⁻¹ : GL (Fin 2) ℚ) = mapGL ℚ τsl⁻¹ by
+    simpa [τsl] using hmapInv]
+  let W : Matrix (Fin 2) (Fin 2) ℤ := Matrix.of ![![τ'.1 1 1 - (N : ℤ) * r_int * τ'.1 0 1, -(τ'.1 0 1) * k_exp],
+    ![(N : ℤ) * c'', τ'.1 0 0]]
+  let U : Matrix (Fin 2) (Fin 2) ℤ := !![1, 0; (N : ℤ) * ↑r_int.toNat, 1]
+  have hWmap : ((mapGL ℚ ⟨W, hW⟩ : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ) =
+      W.map (Int.castRingHom ℚ) := Matrix.SpecialLinearGroup.mapGL_coe_matrix _
+  have hUmap : ((mapGL ℚ ⟨U, hU⟩ : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ) =
+      U.map (Int.castRingHom ℚ) := Matrix.SpecialLinearGroup.mapGL_coe_matrix _
+  apply Units.ext
+  simp only [Units.val_mul, W, U, hWmap, hUmap]
+  ext i j
+  simp only [diagMat_val 2 _ ha, Matrix.SpecialLinearGroup.mapGL_coe_matrix,
+    GeneralLinearGroup.coe_mul,
     algebraMap_int_eq, Int.coe_castRingHom, Matrix.map_apply,
     SpecialLinearGroup.coe_matrix_coe,
     SpecialLinearGroup.coe_inv, SpecialLinearGroup.coe_mul,
@@ -378,7 +406,7 @@ private lemma lunip_conj_diag_eq (N : ℕ) [NeZero N] (k_exp : ℕ)
   have hr_cast : ((r_int).toNat : ℤ) = r_int := Int.toNat_of_nonneg hr_nn
   fin_cases i <;> fin_cases j <;>
     simp only [hr_cast] <;>
-    push_cast [hc', hc''] <;>
+    push_cast [τsl, hc', hc''] <;>
     (try ring) <;>
     (have := congr_arg (Int.cast (R := ℚ)) hc''; push_cast at this ⊢; nlinarith)
 

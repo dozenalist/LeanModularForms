@@ -5,6 +5,8 @@ Authors: Chris Birkbeck
 -/
 import LeanModularForms.HeckeRIngs.AbstractHeckeRing.Module
 
+set_option backward.isDefEq.respectTransparency.types false
+
 /-!
 # Hecke Rings: Associativity
 

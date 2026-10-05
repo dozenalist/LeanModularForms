@@ -26,6 +26,12 @@ open CuspForm
 
 variable {N : ℕ} [NeZero N]
 
+private lemma mapGL_real_coe (γ : SL(2, ℤ)) :
+    ((mapGL ℝ γ : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) =
+      γ.val.map (algebraMap ℤ ℝ) := by
+  rw [Matrix.SpecialLinearGroup.mapGL_coe_matrix]
+  rfl
+
 /-! ### T128 DS-standard `δ_b` representative-system helpers
 
 The `δ_b ∈ Γ₁(N)` matrix realizing `γ₀ · T_p_upper(b) = T_p_lower · δ_b` for
@@ -84,9 +90,10 @@ theorem mapGL_gamma0_mul_T_p_upper_eq_T_p_lower_mul_mapGL_delta
       ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) : GL (Fin 2) ℝ) :
       Matrix (Fin 2) (Fin 2) ℝ) =
       !![(p : ℝ), -((Int.gcdB p N : ℤ) : ℝ); (N : ℝ), ((Int.gcdA p N : ℤ) : ℝ)] := by
+    rw [mapGL_real_coe]
     ext i' j'
     fin_cases i' <;> fin_cases j' <;>
-      simp [adjointGamma0Rep, mapGL_coe_matrix, algebraMap_int_eq, Matrix.of_apply]
+      simp [adjointGamma0Rep, algebraMap_int_eq, Matrix.of_apply]
   have h_Tu_mat : ((glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) :
       Matrix (Fin 2) (Fin 2) ℝ) = !![(1 : ℝ), (b : ℝ); 0, (p : ℝ)] := by
     ext i' j'; fin_cases i' <;> fin_cases j' <;>
@@ -102,9 +109,9 @@ theorem mapGL_gamma0_mul_T_p_upper_eq_T_p_lower_mul_mapGL_delta
       Matrix (Fin 2) (Fin 2) ℝ) =
       !![(1 : ℝ), ((b : ℝ) - ((Int.gcdB p N : ℤ) : ℝ));
          (N : ℝ), ((N : ℝ) * b + (p : ℝ) * ((Int.gcdA p N : ℤ) : ℝ))] := by
+    rw [mapGL_real_coe]
     ext i' j'; fin_cases i' <;> fin_cases j' <;>
-      simp [mapGL_coe_matrix, gamma0_T_p_upper_Gamma1_factor, algebraMap_int_eq,
-        Matrix.of_apply]
+      simp [gamma0_T_p_upper_Gamma1_factor, algebraMap_int_eq, Matrix.of_apply]
   show ((mapGL ℝ : SL(2, ℤ) →* _)
         ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) *
       (glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) : GL (Fin 2) ℝ).val i j =
@@ -256,9 +263,15 @@ private theorem T_p_lower_mul_T_p_upper_smul_eq_shift_smul
     rw [mapGL_SL_det_val_eq_one]; exact one_pos
   refine UpperHalfPlane_smul_eq_of_matrix_smul_eq _ _ h_det_pos_LHS h_det_pos_RHS
     (p : ℝ) (by exact_mod_cast hp.ne') ?_ τ
+  have h_shift : ((mapGL ℝ (shiftSL_loc (b : ℤ)) : GL (Fin 2) ℝ) :
+      Matrix (Fin 2) (Fin 2) ℝ) = !![(1 : ℝ), (b : ℝ); 0, 1] := by
+    rw [mapGL_real_coe]
+    ext i' j'
+    fin_cases i' <;> fin_cases j' <;> simp [shiftSL_loc, Matrix.of_apply]
   ext i j
+  rw [h_shift]
   fin_cases i <;> fin_cases j <;>
-    simp [glMap, T_p_lower, T_p_upper, mapGL_coe_matrix, shiftSL_loc,
+    simp [glMap, T_p_lower, T_p_upper, shiftSL_loc,
       Matrix.GeneralLinearGroup.mkOfDetNeZero, Matrix.GeneralLinearGroup.map,
       Matrix.mul_apply, Fin.sum_univ_two, Matrix.of_apply, Units.val_mul,
       algebraMap_int_eq, Matrix.smul_apply] <;>
@@ -845,8 +858,19 @@ private lemma T_p_lower_tile_some_some_notMem_Gamma_up
     simp only [ne_eq, Nat.cast_inj]; exact fun h ↦ hb (by rw [Fin.ext_iff.mpr h])
   have hentry : ((shiftSL_loc (b₁.val : ℤ) * (shiftSL_loc (b₂.val : ℤ))⁻¹).val 0 1 : ℤ) =
       (b₁.val : ℤ) - (b₂.val : ℤ) := by
-    simp only [shiftSL_loc, Matrix.SpecialLinearGroup.coe_mul,
-      Matrix.SpecialLinearGroup.coe_inv, Matrix.adjugate_fin_two_of, Matrix.mul_apply,
+    have hinv : (shiftSL_loc (b₂.val : ℤ))⁻¹ = shiftSL_loc (-(b₂.val : ℤ)) := by
+      apply inv_eq_of_mul_eq_one_right
+      apply Matrix.SpecialLinearGroup.ext
+      intro i j
+      change ((shiftSL_loc (b₂.val : ℤ)).val *
+        (shiftSL_loc (-(b₂.val : ℤ))).val) i j = _
+      fin_cases i <;> fin_cases j <;>
+        simp [shiftSL_loc, Matrix.mul_apply, Fin.sum_univ_two, Matrix.of_apply] <;> ring
+    change (((shiftSL_loc (b₁.val : ℤ)).val *
+      ((shiftSL_loc (b₂.val : ℤ))⁻¹).val) 0 1 : ℤ) = _
+    rw [hinv]
+    simp only [shiftSL_loc, Matrix.SpecialLinearGroup.coe_inv,
+      Matrix.adjugate_fin_two_of, Matrix.mul_apply,
       Fin.sum_univ_two, Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one,
       Matrix.of_apply, Matrix.empty_val', Matrix.cons_val_fin_one]
     ring
@@ -870,6 +894,9 @@ private lemma T_p_lower_tile_some_none_notMem_Gamma_up [NeZero N]
   haveI : Fact (Nat.Prime p) := ⟨hp⟩
   have hentry : ((shiftSL_loc (b₁.val : ℤ) * (M_infty_Gamma1_factor N p hpN 0)⁻¹).val 0 1 : ℤ) =
       -1 + (b₁.val : ℤ) * ((aInvOfCoprime N p hpN : ℤ) * p) := by
+    change (((shiftSL_loc (b₁.val : ℤ)).val *
+      ((M_infty_Gamma1_factor N p hpN 0)⁻¹).val) 0 1 : ℤ) = _
+    rw [Matrix.SpecialLinearGroup.coe_inv]
     simp only [M_infty_Gamma1_factor, shiftSL_loc, Matrix.SpecialLinearGroup.coe_mul,
       Matrix.SpecialLinearGroup.coe_inv, Matrix.adjugate_fin_two_of, Matrix.mul_apply,
       Fin.sum_univ_two, Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one,
@@ -890,6 +917,9 @@ private lemma T_p_lower_tile_none_some_notMem_Gamma_up [NeZero N]
   haveI : Fact (Nat.Prime p) := ⟨hp⟩
   have hentry : ((M_infty_Gamma1_factor N p hpN 0 * (shiftSL_loc (b₂.val : ℤ))⁻¹).val 0 1 : ℤ) =
       1 - (aInvOfCoprime N p hpN : ℤ) * p * (b₂.val : ℤ) := by
+    change (((M_infty_Gamma1_factor N p hpN 0).val *
+      ((shiftSL_loc (b₂.val : ℤ))⁻¹).val) 0 1 : ℤ) = _
+    rw [Matrix.SpecialLinearGroup.coe_inv]
     simp only [M_infty_Gamma1_factor, shiftSL_loc, Matrix.SpecialLinearGroup.coe_mul,
       Matrix.SpecialLinearGroup.coe_inv, Matrix.adjugate_fin_two_of, Matrix.mul_apply,
       Fin.sum_univ_two, Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one,
@@ -1173,11 +1203,13 @@ private lemma gamma0_T_p_upper_zero_mul_M_infty_zero_val
          (N : ℤ) * ((aInvOfCoprime N p hpN : ℤ) * p) +
            (p : ℤ) * (Int.gcdA p N) * ((N : ℤ) * mIdxOfCoprime N p hpN),
          (N : ℤ) + (p : ℤ) * (Int.gcdA p N)] := by
-  simp only [gamma0_T_p_upper_Gamma1_factor, M_infty_Gamma1_factor,
-    Matrix.SpecialLinearGroup.coe_mul]
+  change ((gamma0_T_p_upper_Gamma1_factor N p hpN 0).val *
+    (M_infty_Gamma1_factor N p hpN 0).val) = _
   ext ii jj
   fin_cases ii <;> fin_cases jj <;>
-    simp [Matrix.mul_apply, Fin.sum_univ_two, Matrix.of_apply] <;> ring
+    simp [gamma0_T_p_upper_Gamma1_factor, M_infty_Gamma1_factor,
+      Matrix.SpecialLinearGroup.coe_mul, Matrix.mul_apply, Fin.sum_univ_two,
+      Matrix.of_apply] <;> ring
 
 open CongruenceSubgroup in
 /-- `some/some` case of `ds_p_plus_one_family_Gamma1_factor_inv_mul_notMem_Gamma0`:
@@ -1199,6 +1231,9 @@ private lemma ds_p_plus_one_family_Gamma1_factor_some_some_notMem_Gamma0 [NeZero
       (N : ℤ) * (N : ℤ) * ((b₂.val : ℤ) - (b₁.val : ℤ)) := by
     show ((gamma0_T_p_upper_Gamma1_factor N p hpN b₁.val *
       (gamma0_T_p_upper_Gamma1_factor N p hpN b₂.val)⁻¹).val 1 0 : ℤ) = _
+    change (((gamma0_T_p_upper_Gamma1_factor N p hpN b₁.val).val *
+      ((gamma0_T_p_upper_Gamma1_factor N p hpN b₂.val)⁻¹).val) 1 0 : ℤ) = _
+    rw [Matrix.SpecialLinearGroup.coe_inv]
     simp only [gamma0_T_p_upper_Gamma1_factor, Matrix.SpecialLinearGroup.coe_mul,
       Matrix.SpecialLinearGroup.coe_inv, Matrix.adjugate_fin_two_of, Matrix.mul_apply,
       Fin.sum_univ_two, Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one,
